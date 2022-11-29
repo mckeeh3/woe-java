@@ -1,0 +1,28 @@
+@urlPrefix = https://green-voice-3640.us-east1.kalix.app
+@generatorId = "generator2"
+@position = { "lat": 40.7128, "lng": -74.0060 }
+@radiusKm = 100
+@generate = 1000
+@ratePerSecond = 1000
+
+###
+
+POST {{urlPrefix}}/generator/{{generatorId}}/create
+Content-Type: application/json
+
+{
+  "generatorId":{{generatorId}},
+  "position":{{position}},
+  "radiusKm":{{radiusKm}},
+  "generate":{{generate}},
+  "ratePerSecond":{{ratePerSecond}}
+}
+
+###
+
+PUT {{urlPrefix}}/generator/{{generatorId}}/generate
+Content-Type: application/json
+
+{
+  "generatorId":{{generatorId}}
+}
