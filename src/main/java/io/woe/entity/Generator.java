@@ -49,8 +49,7 @@ public class Generator extends EventSourcedEntity<Generator.State> {
 
   @GetMapping("/{generatorId}")
   public Effect<Generator.State> get(@PathVariable String generatorId) {
-    log.info("GeneratorId: {}", generatorId);
-    log.info("State: {}", currentState());
+    log.info("GeneratorId: {}\nState: {}", generatorId, currentState());
     if (currentState().isEmpty()) {
       return effects().error("Generator not created");
     }
@@ -135,7 +134,7 @@ public class Generator extends EventSourcedEntity<Generator.State> {
     private List<DevicesToGenerateEvent> createDevicesToGenerateEvents(String generatorId) {
       var elapsedMs = epochMsNow() - startTimeMs;
       var devicesPerBatch = 32;
-      var devicesToBeCreated = (int) Math.min(deviceCountLimit, (elapsedMs * ratePerSecond / 1000) - deviceCountCurrent);
+      var devicesToBeCreated = (int) Math.min(deviceCountLimit - deviceCountCurrent, (elapsedMs * ratePerSecond / 1000) - deviceCountCurrent);
       var deviceBatches = devicesToBeCreated / devicesPerBatch + (devicesToBeCreated % devicesPerBatch > 0 ? 1 : 0);
       if (deviceBatches == 0) {
         return List.of();
@@ -229,7 +228,7 @@ public class Generator extends EventSourcedEntity<Generator.State> {
           Math.cos(lat) * Math.sin(distance / earthRadiusKm) * Math.cos(angle));
       final var lng2 = lng + Math.atan2(Math.sin(angle) * Math.sin(distance / earthRadiusKm) * Math.cos(lat),
           Math.cos(distance / earthRadiusKm) - Math.sin(lat) * Math.sin(lat2));
-      var deviceId = "device-id-%1.8f-%1.8f".formatted(position.lat, position.lng);
+      var deviceId = "device-id:%1.13f:%1.13f".formatted(lat2, lng2);
       return new Device(deviceId, generatorId, LatLng.fromRadians(lat2, lng2));
     }
   }
