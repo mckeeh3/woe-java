@@ -9,6 +9,7 @@ import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,7 +22,7 @@ import kalix.springsdk.annotations.EventHandler;
 
 @EntityKey("generatorId")
 @EntityType("generator")
-@RequestMapping("/generator/{generatorId}")
+@RequestMapping("/generator")
 public class Generator extends EventSourcedEntity<Generator.State> {
   private static final Logger log = LoggerFactory.getLogger(Generator.class);
 
@@ -30,7 +31,7 @@ public class Generator extends EventSourcedEntity<Generator.State> {
     return State.empty();
   }
 
-  @PostMapping("/create")
+  @PostMapping("/{generatorId}/create")
   public Effect<String> create(@RequestBody CreateGeneratorCommand command) {
     log.info("State: {}\nCommand: {}", currentState(), command);
     return effects()
@@ -38,7 +39,7 @@ public class Generator extends EventSourcedEntity<Generator.State> {
         .thenReply(__ -> "OK");
   }
 
-  @PutMapping("/generate")
+  @PutMapping("/{generatorId}/generate")
   public Effect<String> generate(@RequestBody GenerateCommand command) {
     log.info("State: {}\nCommand: {}", currentState(), command);
     return effects()
@@ -46,8 +47,10 @@ public class Generator extends EventSourcedEntity<Generator.State> {
         .thenReply(__ -> "OK");
   }
 
-  @GetMapping("")
-  public Effect<Generator.State> get() {
+  @GetMapping("/{generatorId}")
+  public Effect<Generator.State> get(@PathVariable String generatorId) {
+    log.info("GeneratorId: {}", generatorId);
+    log.info("State: {}", currentState());
     if (currentState().isEmpty()) {
       return effects().error("Generator not created");
     }
@@ -107,7 +110,7 @@ public class Generator extends EventSourcedEntity<Generator.State> {
             ratePerSecond));
       }
       var generatorCreatedEvent = new GeneratorCreatedEvent(
-          command.generatorId(),
+          command.generatorId,
           command.position,
           command.radiusKm,
           command.deviceCountLimit,
@@ -134,9 +137,12 @@ public class Generator extends EventSourcedEntity<Generator.State> {
       var devicesPerBatch = 32;
       var devicesToBeCreated = (int) Math.min(deviceCountLimit, (elapsedMs * ratePerSecond / 1000) - deviceCountCurrent);
       var deviceBatches = devicesToBeCreated / devicesPerBatch + (devicesToBeCreated % devicesPerBatch > 0 ? 1 : 0);
+      if (deviceBatches == 0) {
+        return List.of();
+      }
       return IntStream.range(0, deviceBatches)
           .mapToObj(i -> (i + 1) * devicesPerBatch > devicesToBeCreated ? devicesToBeCreated % devicesPerBatch : devicesPerBatch)
-          .map(i -> DevicesToGenerateEvent.with(generatorId, position, radiusKm, devicesPerBatch))
+          .map(i -> DevicesToGenerateEvent.with(generatorId, position, radiusKm, i))
           .toList();
     }
 
@@ -223,7 +229,7 @@ public class Generator extends EventSourcedEntity<Generator.State> {
           Math.cos(lat) * Math.sin(distance / earthRadiusKm) * Math.cos(angle));
       final var lng2 = lng + Math.atan2(Math.sin(angle) * Math.sin(distance / earthRadiusKm) * Math.cos(lat),
           Math.cos(distance / earthRadiusKm) - Math.sin(lat) * Math.sin(lat2));
-      var deviceId = "device-id-%1.8.f-%1.8.f".formatted(position.lat, position.lng);
+      var deviceId = "device-id-%1.8f-%1.8f".formatted(position.lat, position.lng);
       return new Device(deviceId, generatorId, LatLng.fromRadians(lat2, lng2));
     }
   }

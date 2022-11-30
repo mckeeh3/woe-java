@@ -1,10 +1,9 @@
 package io.woe;
 
-import kalix.springsdk.testkit.KalixIntegrationTestKitSupport;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.Duration;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,10 +13,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import io.woe.entity.Generator;
+import kalix.springsdk.testkit.KalixIntegrationTestKitSupport;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = Main.class)
-public class GeneratorTest extends KalixIntegrationTestKitSupport {
+public class GeneratorIntegrationTest extends KalixIntegrationTestKitSupport {
   @Autowired
   private WebClient webClient;
   private Duration timeout = Duration.of(5 * 60, java.time.temporal.ChronoUnit.SECONDS);
@@ -38,8 +38,8 @@ public class GeneratorTest extends KalixIntegrationTestKitSupport {
         .toEntity(String.class)
         .block(timeout);
 
-    Assertions.assertEquals(HttpStatus.OK, createResponse.getStatusCode());
-    Assertions.assertEquals("\"OK\"", createResponse.getBody());
+    assertEquals(HttpStatus.OK, createResponse.getStatusCode());
+    assertEquals("\"OK\"", createResponse.getBody());
 
     var getResponse = webClient.get()
         .uri("/generator/{generatorId}", generatorId)
@@ -47,15 +47,15 @@ public class GeneratorTest extends KalixIntegrationTestKitSupport {
         .toEntity(Generator.State.class)
         .block(timeout);
 
-    Assertions.assertEquals(HttpStatus.OK, getResponse.getStatusCode());
+    assertEquals(HttpStatus.OK, getResponse.getStatusCode());
 
     var state = getResponse.getBody();
 
-    Assertions.assertEquals(generatorId, state.generatorId());
-    Assertions.assertEquals(position, state.position());
-    Assertions.assertEquals(radiusKm, state.radiusKm());
-    Assertions.assertEquals(deviceCountLimit, state.deviceCountLimit());
-    Assertions.assertEquals(ratePerSecond, state.ratePerSecond());
+    assertEquals(generatorId, state.generatorId());
+    assertEquals(position, state.position());
+    assertEquals(radiusKm, state.radiusKm());
+    assertEquals(deviceCountLimit, state.deviceCountLimit());
+    assertEquals(ratePerSecond, state.ratePerSecond());
   }
 
   @Test
@@ -74,8 +74,8 @@ public class GeneratorTest extends KalixIntegrationTestKitSupport {
         .toEntity(String.class)
         .block(timeout);
 
-    Assertions.assertEquals(HttpStatus.OK, createResponse.getStatusCode());
-    Assertions.assertEquals("\"OK\"", createResponse.getBody());
+    assertEquals(HttpStatus.OK, createResponse.getStatusCode());
+    assertEquals("\"OK\"", createResponse.getBody());
 
     var generateCommand = new Generator.GenerateCommand(generatorId);
 
@@ -86,8 +86,8 @@ public class GeneratorTest extends KalixIntegrationTestKitSupport {
         .toEntity(String.class)
         .block(timeout);
 
-    Assertions.assertEquals(HttpStatus.OK, generateResponse.getStatusCode());
-    Assertions.assertEquals("\"OK\"", generateResponse.getBody());
+    assertEquals(HttpStatus.OK, generateResponse.getStatusCode());
+    assertEquals("\"OK\"", generateResponse.getBody());
 
     var getResponse = webClient.get()
         .uri("/generator/{generatorId}", generatorId)
@@ -95,15 +95,15 @@ public class GeneratorTest extends KalixIntegrationTestKitSupport {
         .toEntity(Generator.State.class)
         .block(timeout);
 
-    Assertions.assertEquals(HttpStatus.OK, getResponse.getStatusCode());
+    assertEquals(HttpStatus.OK, getResponse.getStatusCode());
 
     var state = getResponse.getBody();
 
-    Assertions.assertEquals(generatorId, state.generatorId());
-    Assertions.assertEquals(position, state.position());
-    Assertions.assertEquals(radiusKm, state.radiusKm());
-    Assertions.assertEquals(deviceCountLimit, state.deviceCountLimit());
-    Assertions.assertEquals(ratePerSecond, state.ratePerSecond());
-    Assertions.assertEquals(1, state.deviceCountLimit());
+    assertEquals(generatorId, state.generatorId());
+    assertEquals(position, state.position());
+    assertEquals(radiusKm, state.radiusKm());
+    assertEquals(deviceCountLimit, state.deviceCountLimit());
+    assertEquals(ratePerSecond, state.ratePerSecond());
+    assertEquals(1000, state.deviceCountLimit());
   }
 }
