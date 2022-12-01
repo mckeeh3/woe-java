@@ -71,8 +71,8 @@ public class DeviceEntityTest {
         if (event instanceof DeviceEntity.PingedEvent) {
           var pingedEvent = (DeviceEntity.PingedEvent) event;
           assertEquals(command1.deviceId(), pingedEvent.deviceId());
-        } else if (event instanceof DeviceEntity.DeviceAlarmChanged) {
-          var deviceNotFoundEvent = (DeviceEntity.DeviceAlarmChanged) event;
+        } else if (event instanceof DeviceEntity.AlarmChangedEvent) {
+          var deviceNotFoundEvent = (DeviceEntity.AlarmChangedEvent) event;
           assertEquals(command1.deviceId(), deviceNotFoundEvent.deviceId());
         }
       }

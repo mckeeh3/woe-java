@@ -70,7 +70,7 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
   }
 
   @EventHandler
-  public State on(DeviceAlarmChanged event) {
+  public State on(AlarmChangedEvent event) {
     log.info("State: {}\nEvent: {}", currentState(), event);
     return currentState().on(event);
   }
@@ -91,9 +91,9 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
 
     public List<?> eventsFor(PingCommand command) {
       if (alarmOn && random.nextDouble() * 100 > 95) {
-        return List.of(new DeviceAlarmChanged(command.deviceId, true, Instant.now()));
+        return List.of(new AlarmChangedEvent(command.deviceId, true, Instant.now()));
       } else if (!alarmOn && random.nextDouble() * 1_000 > 999) {
-        return List.of(new DeviceAlarmChanged(command.deviceId, false, Instant.now()));
+        return List.of(new AlarmChangedEvent(command.deviceId, false, Instant.now()));
       }
       return List.of();
     }
@@ -110,18 +110,18 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
       return new State(deviceId, position, lastPinged, alarmOn, alarmLastTriggered);
     }
 
-    public State on(DeviceAlarmChanged event) {
+    public State on(AlarmChangedEvent event) {
       return new State(deviceId, position, Instant.now(), event.alarmOn, event.alarmLastTriggered);
     }
   }
 
   public record CreateDeviceCommand(String deviceId, LatLng position) {}
 
-  public record DeviceCreatedEvent(String deviceId, LatLng position) {}
-
   public record PingCommand(String deviceId) {}
+
+  public record DeviceCreatedEvent(String deviceId, LatLng position) {}
 
   public record PingedEvent(String deviceId) {}
 
-  public record DeviceAlarmChanged(String deviceId, boolean alarmOn, Instant alarmLastTriggered) {}
+  public record AlarmChangedEvent(String deviceId, boolean alarmOn, Instant alarmLastTriggered) {}
 }

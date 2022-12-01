@@ -1,6 +1,8 @@
 package io.woe;
 
 interface WorldMap {
+  static final int earthRadiusKm = 6371;
+
   static LatLng latLng(double lat, double lng) {
     return new LatLng(lat, lng);
   }

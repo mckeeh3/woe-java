@@ -27,6 +27,7 @@ import static io.woe.WorldMap.*;
 @RequestMapping("/generator")
 public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
   private static final Logger log = LoggerFactory.getLogger(GeneratorEntity.class);
+  private static final Random random = new Random();
 
   @Override
   public State emptyState() {
@@ -99,15 +100,17 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
             generatorId,
             position,
             radiusKm,
-            deviceCountLimit,
-            ratePerSecond));
+            ratePerSecond,
+            startTimeMs,
+            deviceCountLimit));
       }
       var generatorCreatedEvent = new GeneratorCreatedEvent(
           command.generatorId,
           command.position,
           command.radiusKm,
-          command.deviceCountLimit,
-          command.ratePerSecond);
+          command.ratePerSecond,
+          epochMsNow(),
+          command.deviceCountLimit);
       var events = new ArrayList<Object>();
       events.add(generatorCreatedEvent);
       events.addAll(createDevicesToGenerateEvents(command.generatorId()));
@@ -120,7 +123,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
           .map(e -> e.devices().size())
           .reduce(0, (a, n) -> a + n);
       var events = new ArrayList<Object>();
-      events.add(new GeneratedEvent(generatorId(), devicesToBeCreated));
+      events.add(new GeneratedEvent(generatorId(), deviceCountCurrent + devicesToBeCreated));
       events.addAll(deviceBatches);
       return events;
     }
@@ -148,7 +151,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
           event.position(),
           event.radiusKm(),
           event.ratePerSecond(),
-          epochMsNow(),
+          event.startTimeMs(),
           event.deviceCountLimit(),
           0);
     }
@@ -161,7 +164,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
           ratePerSecond,
           startTimeMs,
           deviceCountLimit,
-          deviceCountCurrent + event.devicesGenerated());
+          event.deviceCountCurrent());
     }
 
     public State on(DevicesToGenerateEvent event) {
@@ -177,9 +180,9 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
 
   public record GenerateCommand(String generatorId) {}
 
-  public record GeneratorCreatedEvent(String generatorId, LatLng position, double radiusKm, int deviceCountLimit, int ratePerSecond) {}
+  public record GeneratorCreatedEvent(String generatorId, LatLng position, double radiusKm, int ratePerSecond, long startTimeMs, int deviceCountLimit) {}
 
-  public record GeneratedEvent(String generatorId, int devicesGenerated) {}
+  public record GeneratedEvent(String generatorId, int deviceCountCurrent) {}
 
   public record DevicesToGenerateEvent(String generatorId, List<Device> devices) {
     static DevicesToGenerateEvent with(String generatorId, LatLng position, double radiusKm, int deviceCount) {
@@ -193,8 +196,6 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
     }
 
     private static Device nextDevice(String generatorId, LatLng position, double radiusKm) {
-      final var random = new Random();
-      final var earthRadiusKm = 6371;
       final var angle = random.nextDouble() * 2 * Math.PI;
       final var distance = random.nextDouble() * radiusKm;
       final var lat = Math.toRadians(position.lat());

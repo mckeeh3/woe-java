@@ -98,7 +98,7 @@ public class GeneratorEntityTest {
       assertFalse(result.isError());
       assertTrue(result.didEmitEvents());
       assertTrue(result.getAllEvents().size() > 1);
-      assertTrue(result.getNextEventOfType(GeneratorEntity.GeneratedEvent.class).devicesGenerated() > 0);
+      assertTrue(result.getNextEventOfType(GeneratorEntity.GeneratedEvent.class).deviceCountCurrent() > 0);
     }
   }
 
@@ -119,7 +119,7 @@ public class GeneratorEntityTest {
       assertFalse(result.isError());
       assertTrue(result.didEmitEvents());
       assertTrue(result.getAllEvents().size() > 1);
-      assertEquals(devicesToGenerate, result.getNextEventOfType(GeneratorEntity.GeneratedEvent.class).devicesGenerated());
+      assertEquals(devicesToGenerate, result.getNextEventOfType(GeneratorEntity.GeneratedEvent.class).deviceCountCurrent());
     }
 
     { // this second test should generate 0 devices
@@ -128,7 +128,7 @@ public class GeneratorEntityTest {
       assertFalse(result.isError());
       assertTrue(result.didEmitEvents());
       assertEquals(1, result.getAllEvents().size());
-      assertEquals(0, result.getNextEventOfType(GeneratorEntity.GeneratedEvent.class).devicesGenerated());
+      assertEquals(0, result.getNextEventOfType(GeneratorEntity.GeneratedEvent.class).deviceCountCurrent());
     }
   }
 
