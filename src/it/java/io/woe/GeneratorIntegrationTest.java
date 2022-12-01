@@ -12,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import io.woe.entity.Generator;
 import kalix.springsdk.testkit.KalixIntegrationTestKitSupport;
 
 @RunWith(SpringRunner.class)
@@ -25,11 +24,11 @@ public class GeneratorIntegrationTest extends KalixIntegrationTestKitSupport {
   @Test
   public void create() {
     var generatorId = "generator-1";
-    var position = new Generator.LatLng(1.0, 2.0);
+    var position = new GeneratorEntity.LatLng(1.0, 2.0);
     var radiusKm = 10.0;
     var deviceCountLimit = 1000;
     var ratePerSecond = 10;
-    var createCommand = new Generator.CreateGeneratorCommand(generatorId, position, radiusKm, deviceCountLimit, ratePerSecond);
+    var createCommand = new GeneratorEntity.CreateGeneratorCommand(generatorId, position, radiusKm, deviceCountLimit, ratePerSecond);
 
     var createResponse = webClient.post()
         .uri("/generator/{generatorId}/create", generatorId)
@@ -44,7 +43,7 @@ public class GeneratorIntegrationTest extends KalixIntegrationTestKitSupport {
     var getResponse = webClient.get()
         .uri("/generator/{generatorId}", generatorId)
         .retrieve()
-        .toEntity(Generator.State.class)
+        .toEntity(GeneratorEntity.State.class)
         .block(timeout);
 
     assertEquals(HttpStatus.OK, getResponse.getStatusCode());
@@ -61,11 +60,11 @@ public class GeneratorIntegrationTest extends KalixIntegrationTestKitSupport {
   @Test
   public void generate() {
     var generatorId = "generator-1";
-    var position = new Generator.LatLng(1.0, 2.0);
+    var position = new GeneratorEntity.LatLng(1.0, 2.0);
     var radiusKm = 10.0;
     var deviceCountLimit = 1000;
     var ratePerSecond = 10;
-    var command = new Generator.CreateGeneratorCommand(generatorId, position, radiusKm, deviceCountLimit, ratePerSecond);
+    var command = new GeneratorEntity.CreateGeneratorCommand(generatorId, position, radiusKm, deviceCountLimit, ratePerSecond);
 
     var createResponse = webClient.post()
         .uri("/generator/{generatorId}/create", generatorId)
@@ -77,7 +76,7 @@ public class GeneratorIntegrationTest extends KalixIntegrationTestKitSupport {
     assertEquals(HttpStatus.OK, createResponse.getStatusCode());
     assertEquals("\"OK\"", createResponse.getBody());
 
-    var generateCommand = new Generator.GenerateCommand(generatorId);
+    var generateCommand = new GeneratorEntity.GenerateCommand(generatorId);
 
     var generateResponse = webClient.put()
         .uri("/generator/{generatorId}/generate", generatorId)
@@ -92,7 +91,7 @@ public class GeneratorIntegrationTest extends KalixIntegrationTestKitSupport {
     var getResponse = webClient.get()
         .uri("/generator/{generatorId}", generatorId)
         .retrieve()
-        .toEntity(Generator.State.class)
+        .toEntity(GeneratorEntity.State.class)
         .block(timeout);
 
     assertEquals(HttpStatus.OK, getResponse.getStatusCode());

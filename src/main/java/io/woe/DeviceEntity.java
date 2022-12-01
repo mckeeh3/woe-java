@@ -1,4 +1,4 @@
-package io.woe.entity;
+package io.woe;
 
 import java.time.Instant;
 import java.util.List;
@@ -21,8 +21,8 @@ import kalix.springsdk.annotations.EventHandler;
 @EntityKey("deviceId")
 @EntityType("device")
 @RequestMapping("/device")
-public class Device extends EventSourcedEntity<Device.State> {
-  private static final Logger log = LoggerFactory.getLogger(Device.class);
+public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
+  private static final Logger log = LoggerFactory.getLogger(DeviceEntity.class);
   private static final Random random = new Random();
 
   @Override
@@ -47,7 +47,7 @@ public class Device extends EventSourcedEntity<Device.State> {
   }
 
   @GetMapping("/{deviceId}")
-  public Effect<Device.State> get(@PathVariable String deviceId) {
+  public Effect<DeviceEntity.State> get(@PathVariable String deviceId) {
     log.info("DeviceId: {}\nState: {}", deviceId, currentState());
     if (currentState().isEmpty()) {
       return effects().error("Device not created");

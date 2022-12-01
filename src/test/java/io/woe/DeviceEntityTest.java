@@ -1,4 +1,4 @@
-package io.woe.entity;
+package io.woe;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -7,20 +7,20 @@ import org.junit.Test;
 
 import kalix.springsdk.testkit.EventSourcedTestKit;
 
-public class DeviceTest {
+public class DeviceEntityTest {
 
   @Test
   public void createDeviceTest() {
-    var testKit = EventSourcedTestKit.of(Device::new);
+    var testKit = EventSourcedTestKit.of(DeviceEntity::new);
 
     var deviceId = "device-1";
-    var position = new Device.LatLng(1.0, 2.0);
-    var createCommand = new Device.CreateDeviceCommand(deviceId, position);
+    var position = new DeviceEntity.LatLng(1.0, 2.0);
+    var createCommand = new DeviceEntity.CreateDeviceCommand(deviceId, position);
 
     var result = testKit.call(e -> e.create(createCommand));
     assertEquals("OK", result.getReply());
 
-    var event = result.getNextEventOfType(Device.DeviceCreatedEvent.class);
+    var event = result.getNextEventOfType(DeviceEntity.DeviceCreatedEvent.class);
     assertEquals(deviceId, event.deviceId());
 
     var state = testKit.getState();
@@ -30,7 +30,7 @@ public class DeviceTest {
 
   @Test
   public void getDeviceTest() {
-    var testKit = EventSourcedTestKit.of(Device::new);
+    var testKit = EventSourcedTestKit.of(DeviceEntity::new);
 
     var command1 = createDeviceCommand("device-1", position(1, 2));
     {
@@ -50,7 +50,7 @@ public class DeviceTest {
 
   @Test
   public void pingDeviceTest() {
-    var testKit = EventSourcedTestKit.of(Device::new);
+    var testKit = EventSourcedTestKit.of(DeviceEntity::new);
 
     var command1 = createDeviceCommand("device-1", position(1, 2));
     {
@@ -59,29 +59,29 @@ public class DeviceTest {
     }
 
     {
-      var command = new Device.PingCommand(command1.deviceId());
+      var command = new DeviceEntity.PingCommand(command1.deviceId());
       var result = testKit.call(e -> e.ping(command));
       assertFalse(result.isError());
 
       var events = result.getAllEvents();
       if (events.size() > 0) {
         var event = events.get(0);
-        if (event instanceof Device.PingedEvent) {
-          var pingedEvent = (Device.PingedEvent) event;
+        if (event instanceof DeviceEntity.PingedEvent) {
+          var pingedEvent = (DeviceEntity.PingedEvent) event;
           assertEquals(command1.deviceId(), pingedEvent.deviceId());
-        } else if (event instanceof Device.DeviceAlarmChanged) {
-          var deviceNotFoundEvent = (Device.DeviceAlarmChanged) event;
+        } else if (event instanceof DeviceEntity.DeviceAlarmChanged) {
+          var deviceNotFoundEvent = (DeviceEntity.DeviceAlarmChanged) event;
           assertEquals(command1.deviceId(), deviceNotFoundEvent.deviceId());
         }
       }
     }
   }
 
-  private static Device.LatLng position(double lat, double lng) {
-    return new Device.LatLng(lat, lng);
+  private static DeviceEntity.LatLng position(double lat, double lng) {
+    return new DeviceEntity.LatLng(lat, lng);
   }
 
-  private static Device.CreateDeviceCommand createDeviceCommand(String deviceId, Device.LatLng position) {
-    return new Device.CreateDeviceCommand(deviceId, position);
+  private static DeviceEntity.CreateDeviceCommand createDeviceCommand(String deviceId, DeviceEntity.LatLng position) {
+    return new DeviceEntity.CreateDeviceCommand(deviceId, position);
   }
 }

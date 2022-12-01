@@ -1,4 +1,4 @@
-package io.woe.entity;
+package io.woe;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -10,24 +10,24 @@ import org.junit.Test;
 
 import kalix.springsdk.testkit.EventSourcedTestKit;
 
-public class GeneratorTest {
+public class GeneratorEntityTest {
 
   @Test
   public void createGeneratorTest() {
-    var testKit = EventSourcedTestKit.of(Generator::new);
+    var testKit = EventSourcedTestKit.of(GeneratorEntity::new);
 
     var generatorId = "generator-1";
-    var position = new Generator.LatLng(1.0, 2.0);
+    var position = new GeneratorEntity.LatLng(1.0, 2.0);
     var radiusKm = 10.0;
     var deviceCountLimit = 1000;
     var ratePerSecond = 10;
 
     {
-      var createCommand = new Generator.CreateGeneratorCommand(generatorId, position, radiusKm, deviceCountLimit, ratePerSecond);
+      var createCommand = new GeneratorEntity.CreateGeneratorCommand(generatorId, position, radiusKm, deviceCountLimit, ratePerSecond);
       var result = testKit.call(e -> e.create(createCommand));
       assertEquals("OK", result.getReply());
 
-      var event = result.getNextEventOfType(Generator.GeneratorCreatedEvent.class);
+      var event = result.getNextEventOfType(GeneratorEntity.GeneratorCreatedEvent.class);
       assertEquals(generatorId, event.generatorId());
 
       var state = testKit.getState();
@@ -41,7 +41,7 @@ public class GeneratorTest {
 
   @Test
   public void getGeneratorTest() {
-    var testKit = EventSourcedTestKit.of(Generator::new);
+    var testKit = EventSourcedTestKit.of(GeneratorEntity::new);
 
     var command1 = createGeneratorCommand("generator-1", position(1, 2), 10.0, 1000, 10);
     {
@@ -72,7 +72,7 @@ public class GeneratorTest {
 
   @Test
   public void getGeneratorNonExistingTest() {
-    var testKit = EventSourcedTestKit.of(Generator::new);
+    var testKit = EventSourcedTestKit.of(GeneratorEntity::new);
 
     var result = testKit.call(e -> e.get("generator-999"));
     assertTrue(result.isError());
@@ -80,7 +80,7 @@ public class GeneratorTest {
 
   @Test
   public void generateTest() throws InterruptedException {
-    var testKit = EventSourcedTestKit.of(Generator::new);
+    var testKit = EventSourcedTestKit.of(GeneratorEntity::new);
 
     var command1 = createGeneratorCommand("generator-1", position(1, 2), 10.0, 1_000_000, 100_000);
     {
@@ -91,18 +91,18 @@ public class GeneratorTest {
     TimeUnit.MILLISECONDS.sleep(10);
 
     {
-      var command = new Generator.GenerateCommand(command1.generatorId());
+      var command = new GeneratorEntity.GenerateCommand(command1.generatorId());
       var result = testKit.call(e -> e.generate(command));
       assertFalse(result.isError());
       assertTrue(result.didEmitEvents());
       assertTrue(result.getAllEvents().size() > 1);
-      assertTrue(result.getNextEventOfType(Generator.GeneratedEvent.class).devicesGenerated() > 0);
+      assertTrue(result.getNextEventOfType(GeneratorEntity.GeneratedEvent.class).devicesGenerated() > 0);
     }
   }
 
   @Test
   public void generateTestToLimit() {
-    var testKit = EventSourcedTestKit.of(Generator::new);
+    var testKit = EventSourcedTestKit.of(GeneratorEntity::new);
 
     var devicesToGenerate = 123;
     var command1 = createGeneratorCommand("generator-1", position(1, 2), 10.0, devicesToGenerate, 1_000_000);
@@ -112,29 +112,29 @@ public class GeneratorTest {
     }
 
     { // this first test should generate 123 devices
-      var command = new Generator.GenerateCommand(command1.generatorId());
+      var command = new GeneratorEntity.GenerateCommand(command1.generatorId());
       var result = testKit.call(e -> e.generate(command));
       assertFalse(result.isError());
       assertTrue(result.didEmitEvents());
       assertTrue(result.getAllEvents().size() > 1);
-      assertEquals(devicesToGenerate, result.getNextEventOfType(Generator.GeneratedEvent.class).devicesGenerated());
+      assertEquals(devicesToGenerate, result.getNextEventOfType(GeneratorEntity.GeneratedEvent.class).devicesGenerated());
     }
 
     { // this second test should generate 0 devices
-      var command = new Generator.GenerateCommand(command1.generatorId());
+      var command = new GeneratorEntity.GenerateCommand(command1.generatorId());
       var result = testKit.call(e -> e.generate(command));
       assertFalse(result.isError());
       assertTrue(result.didEmitEvents());
       assertEquals(1, result.getAllEvents().size());
-      assertEquals(0, result.getNextEventOfType(Generator.GeneratedEvent.class).devicesGenerated());
+      assertEquals(0, result.getNextEventOfType(GeneratorEntity.GeneratedEvent.class).devicesGenerated());
     }
   }
 
-  private static Generator.LatLng position(double lat, double lng) {
-    return new Generator.LatLng(lat, lng);
+  private static GeneratorEntity.LatLng position(double lat, double lng) {
+    return new GeneratorEntity.LatLng(lat, lng);
   }
 
-  private static Generator.CreateGeneratorCommand createGeneratorCommand(String generatorId, Generator.LatLng position, double radiusKm, int deviceCountLimit, int ratePerSecond) {
-    return new Generator.CreateGeneratorCommand(generatorId, position, radiusKm, deviceCountLimit, ratePerSecond);
+  private static GeneratorEntity.CreateGeneratorCommand createGeneratorCommand(String generatorId, GeneratorEntity.LatLng position, double radiusKm, int deviceCountLimit, int ratePerSecond) {
+    return new GeneratorEntity.CreateGeneratorCommand(generatorId, position, radiusKm, deviceCountLimit, ratePerSecond);
   }
 }

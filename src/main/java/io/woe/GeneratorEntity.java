@@ -1,4 +1,4 @@
-package io.woe.entity;
+package io.woe;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -23,8 +23,8 @@ import kalix.springsdk.annotations.EventHandler;
 @EntityKey("generatorId")
 @EntityType("generator")
 @RequestMapping("/generator")
-public class Generator extends EventSourcedEntity<Generator.State> {
-  private static final Logger log = LoggerFactory.getLogger(Generator.class);
+public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
+  private static final Logger log = LoggerFactory.getLogger(GeneratorEntity.class);
 
   @Override
   public State emptyState() {
@@ -48,7 +48,7 @@ public class Generator extends EventSourcedEntity<Generator.State> {
   }
 
   @GetMapping("/{generatorId}")
-  public Effect<Generator.State> get(@PathVariable String generatorId) {
+  public Effect<GeneratorEntity.State> get(@PathVariable String generatorId) {
     log.info("GeneratorId: {}\nState: {}", generatorId, currentState());
     if (currentState().isEmpty()) {
       return effects().error("Generator not created");
