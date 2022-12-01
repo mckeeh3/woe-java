@@ -10,6 +10,8 @@ import org.junit.Test;
 
 import kalix.springsdk.testkit.EventSourcedTestKit;
 
+import static io.woe.WorldMap.*;
+
 public class GeneratorEntityTest {
 
   @Test
@@ -17,7 +19,7 @@ public class GeneratorEntityTest {
     var testKit = EventSourcedTestKit.of(GeneratorEntity::new);
 
     var generatorId = "generator-1";
-    var position = new GeneratorEntity.LatLng(1.0, 2.0);
+    var position = latLng(1.0, 2.0);
     var radiusKm = 10.0;
     var deviceCountLimit = 1000;
     var ratePerSecond = 10;
@@ -43,7 +45,7 @@ public class GeneratorEntityTest {
   public void getGeneratorTest() {
     var testKit = EventSourcedTestKit.of(GeneratorEntity::new);
 
-    var command1 = createGeneratorCommand("generator-1", position(1, 2), 10.0, 1000, 10);
+    var command1 = createGeneratorCommand("generator-1", latLng(1, 2), 10.0, 1000, 10);
     {
       var result = testKit.call(e -> e.create(command1));
       assertFalse(result.isError());
@@ -82,7 +84,7 @@ public class GeneratorEntityTest {
   public void generateTest() throws InterruptedException {
     var testKit = EventSourcedTestKit.of(GeneratorEntity::new);
 
-    var command1 = createGeneratorCommand("generator-1", position(1, 2), 10.0, 1_000_000, 100_000);
+    var command1 = createGeneratorCommand("generator-1", latLng(1, 2), 10.0, 1_000_000, 100_000);
     {
       var result = testKit.call(e -> e.create(command1));
       assertFalse(result.isError());
@@ -105,7 +107,7 @@ public class GeneratorEntityTest {
     var testKit = EventSourcedTestKit.of(GeneratorEntity::new);
 
     var devicesToGenerate = 123;
-    var command1 = createGeneratorCommand("generator-1", position(1, 2), 10.0, devicesToGenerate, 1_000_000);
+    var command1 = createGeneratorCommand("generator-1", latLng(1, 2), 10.0, devicesToGenerate, 1_000_000);
     {
       var result = testKit.call(e -> e.create(command1));
       assertFalse(result.isError());
@@ -130,11 +132,7 @@ public class GeneratorEntityTest {
     }
   }
 
-  private static GeneratorEntity.LatLng position(double lat, double lng) {
-    return new GeneratorEntity.LatLng(lat, lng);
-  }
-
-  private static GeneratorEntity.CreateGeneratorCommand createGeneratorCommand(String generatorId, GeneratorEntity.LatLng position, double radiusKm, int deviceCountLimit, int ratePerSecond) {
+  private static GeneratorEntity.CreateGeneratorCommand createGeneratorCommand(String generatorId, LatLng position, double radiusKm, int deviceCountLimit, int ratePerSecond) {
     return new GeneratorEntity.CreateGeneratorCommand(generatorId, position, radiusKm, deviceCountLimit, ratePerSecond);
   }
 }

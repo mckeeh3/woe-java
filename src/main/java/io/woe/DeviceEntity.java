@@ -1,5 +1,7 @@
 package io.woe;
 
+import static io.woe.WorldMap.*;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Random;
@@ -73,20 +75,10 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
     return currentState().on(event);
   }
 
-  public record LatLng(
-      double lat,
-      double lng) {
-  }
-
-  public record State(
-      String deviceId,
-      LatLng position,
-      Instant lastPing,
-      boolean alarmOn,
-      Instant alarmLastTriggered) {
+  public record State(String deviceId, LatLng position, Instant lastPing, boolean alarmOn, Instant alarmLastTriggered) {
 
     public static State empty() {
-      return new State(null, new LatLng(0, 0), null, false, null);
+      return new State(null, latLng(0, 0), null, false, null);
     }
 
     public boolean isEmpty() {
@@ -123,27 +115,13 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
     }
   }
 
-  public record CreateDeviceCommand(
-      String deviceId,
-      LatLng position) {
-  }
+  public record CreateDeviceCommand(String deviceId, LatLng position) {}
 
-  public record DeviceCreatedEvent(
-      String deviceId,
-      LatLng position) {
-  }
+  public record DeviceCreatedEvent(String deviceId, LatLng position) {}
 
-  public record PingCommand(
-      String deviceId) {
-  }
+  public record PingCommand(String deviceId) {}
 
-  public record PingedEvent(
-      String deviceId) {
-  }
+  public record PingedEvent(String deviceId) {}
 
-  public record DeviceAlarmChanged(
-      String deviceId,
-      boolean alarmOn,
-      Instant alarmLastTriggered) {
-  }
+  public record DeviceAlarmChanged(String deviceId, boolean alarmOn, Instant alarmLastTriggered) {}
 }

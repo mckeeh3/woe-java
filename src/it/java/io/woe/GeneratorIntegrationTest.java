@@ -1,5 +1,6 @@
 package io.woe;
 
+import static io.woe.WorldMap.latLng;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.Duration;
@@ -24,7 +25,7 @@ public class GeneratorIntegrationTest extends KalixIntegrationTestKitSupport {
   @Test
   public void create() {
     var generatorId = "generator-1";
-    var position = new GeneratorEntity.LatLng(1.0, 2.0);
+    var position = latLng(1.0, 2.0);
     var radiusKm = 10.0;
     var deviceCountLimit = 1000;
     var ratePerSecond = 10;
@@ -60,7 +61,7 @@ public class GeneratorIntegrationTest extends KalixIntegrationTestKitSupport {
   @Test
   public void generate() {
     var generatorId = "generator-1";
-    var position = new GeneratorEntity.LatLng(1.0, 2.0);
+    var position = latLng(1.0, 2.0);
     var radiusKm = 10.0;
     var deviceCountLimit = 1000;
     var ratePerSecond = 10;

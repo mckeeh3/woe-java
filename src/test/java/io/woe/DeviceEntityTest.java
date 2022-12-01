@@ -7,6 +7,8 @@ import org.junit.Test;
 
 import kalix.springsdk.testkit.EventSourcedTestKit;
 
+import static io.woe.WorldMap.*;
+
 public class DeviceEntityTest {
 
   @Test
@@ -14,7 +16,7 @@ public class DeviceEntityTest {
     var testKit = EventSourcedTestKit.of(DeviceEntity::new);
 
     var deviceId = "device-1";
-    var position = new DeviceEntity.LatLng(1.0, 2.0);
+    var position = latLng(1.0, 2.0);
     var createCommand = new DeviceEntity.CreateDeviceCommand(deviceId, position);
 
     var result = testKit.call(e -> e.create(createCommand));
@@ -32,7 +34,7 @@ public class DeviceEntityTest {
   public void getDeviceTest() {
     var testKit = EventSourcedTestKit.of(DeviceEntity::new);
 
-    var command1 = createDeviceCommand("device-1", position(1, 2));
+    var command1 = createDeviceCommand("device-1", latLng(1, 2));
     {
       var result = testKit.call(e -> e.create(command1));
       assertFalse(result.isError());
@@ -52,7 +54,7 @@ public class DeviceEntityTest {
   public void pingDeviceTest() {
     var testKit = EventSourcedTestKit.of(DeviceEntity::new);
 
-    var command1 = createDeviceCommand("device-1", position(1, 2));
+    var command1 = createDeviceCommand("device-1", latLng(1, 2));
     {
       var result = testKit.call(e -> e.create(command1));
       assertFalse(result.isError());
@@ -77,11 +79,7 @@ public class DeviceEntityTest {
     }
   }
 
-  private static DeviceEntity.LatLng position(double lat, double lng) {
-    return new DeviceEntity.LatLng(lat, lng);
-  }
-
-  private static DeviceEntity.CreateDeviceCommand createDeviceCommand(String deviceId, DeviceEntity.LatLng position) {
+  private static DeviceEntity.CreateDeviceCommand createDeviceCommand(String deviceId, LatLng position) {
     return new DeviceEntity.CreateDeviceCommand(deviceId, position);
   }
 }

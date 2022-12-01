@@ -20,6 +20,8 @@ import kalix.springsdk.annotations.EntityKey;
 import kalix.springsdk.annotations.EntityType;
 import kalix.springsdk.annotations.EventHandler;
 
+import static io.woe.WorldMap.*;
+
 @EntityKey("generatorId")
 @EntityType("generator")
 @RequestMapping("/generator")
@@ -72,14 +74,6 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
   public State on(DevicesToGenerateEvent event) {
     log.info("State: {}\nEvent: {}", currentState(), event);
     return currentState().on(event);
-  }
-
-  public record LatLng(
-      double lat,
-      double lng) {
-    static LatLng fromRadians(double lat, double lng) {
-      return new LatLng(Math.toDegrees(lat), Math.toDegrees(lng));
-    }
   }
 
   public record State(
@@ -179,34 +173,15 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
     }
   }
 
-  public record CreateGeneratorCommand(
-      String generatorId,
-      LatLng position,
-      double radiusKm,
-      int deviceCountLimit,
-      int ratePerSecond) {
-  }
+  public record CreateGeneratorCommand(String generatorId, LatLng position, double radiusKm, int deviceCountLimit, int ratePerSecond) {}
 
-  public record GenerateCommand(
-      String generatorId) {
-  }
+  public record GenerateCommand(String generatorId) {}
 
-  public record GeneratorCreatedEvent(
-      String generatorId,
-      LatLng position,
-      double radiusKm,
-      int deviceCountLimit,
-      int ratePerSecond) {
-  }
+  public record GeneratorCreatedEvent(String generatorId, LatLng position, double radiusKm, int deviceCountLimit, int ratePerSecond) {}
 
-  public record GeneratedEvent(
-      String generatorId,
-      int devicesGenerated) {
-  }
+  public record GeneratedEvent(String generatorId, int devicesGenerated) {}
 
-  public record DevicesToGenerateEvent(
-      String generatorId,
-      List<Device> devices) {
+  public record DevicesToGenerateEvent(String generatorId, List<Device> devices) {
     static DevicesToGenerateEvent with(String generatorId, LatLng position, double radiusKm, int deviceCount) {
       return new DevicesToGenerateEvent(generatorId, generateDevices(generatorId, position, radiusKm, deviceCount));
     }
@@ -233,9 +208,5 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
     }
   }
 
-  public record Device(
-      String deviceId,
-      String generatorId,
-      LatLng position) {
-  }
+  public record Device(String deviceId, String generatorId, LatLng position) {}
 }
