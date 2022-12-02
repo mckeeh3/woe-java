@@ -25,7 +25,7 @@ public class GeneratorsByLocationView extends View<GeneratorsByLocationView.Gene
          AND position.lng >= :topLeftLng
          AND position.lng >= :topLeftLng
       """)
-  public Generators getGeneratorsByLocation(@RequestParam("topLeftLat") double topLeftLat, double topLeftLng, double botRightLat, double botRightLng) {
+  public Generators getGeneratorsByLocation(Double topLeftLat, Double topLeftLng, Double botRightLat, Double botRightLng) {
     return null;
   }
 
