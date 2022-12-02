@@ -1,6 +1,7 @@
 package io.woe;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import kalix.javasdk.view.View;
 import kalix.springsdk.annotations.Query;
@@ -10,32 +11,34 @@ import kalix.springsdk.annotations.ViewId;
 
 import static io.woe.WorldMap.*;
 
+import java.util.Collection;
+
 @ViewId("generators-by-location")
-@Table("generators-by-location")
+@Table("generators_by_location")
 public class GeneratorsByLocationView extends View<GeneratorsByLocationView.GeneratorViewRow> {
 
   @GetMapping("/generators/by-location/{topLeftLat}/{topLeftLng}/{botRightLat}/{botRightLng}")
   @Query("""
-      SELECT * FROM generators_by_location
+      SELECT * AS generators FROM generators_by_location
        WHERE position.lat <= :topLeftLat
          AND position.lng >= :topLeftLng
-         AND position.lat >= :botRightLat
-         AND position.lng <= :botRightLng
+         AND position.lng >= :topLeftLng
+         AND position.lng >= :topLeftLng
       """)
-  public String getGeneratorsByLocation(double topLeftLat, double topLeftLng, double botRightLat, double botRightLng) {
+  public Generators getGeneratorsByLocation(@RequestParam("topLeftLat") double topLeftLat, double topLeftLng, double botRightLat, double botRightLng) {
     return null;
   }
 
   @Subscribe.EventSourcedEntity(GeneratorEntity.class)
   public UpdateEffect<GeneratorViewRow> on(GeneratorEntity.GeneratorCreatedEvent event) {
-        return effects().updateState(new GeneratorViewRow(
-            event.generatorId(),
-            event.position(),
-            event.radiusKm(),
-            event.ratePerSecond(),
-            event.startTimeMs(),
-            event.deviceCountLimit(),
-            0));
+    return effects().updateState(new GeneratorViewRow(
+        event.generatorId(),
+        event.position(),
+        event.radiusKm(),
+        event.ratePerSecond(),
+        event.startTimeMs(),
+        event.deviceCountLimit(),
+        0));
   }
 
   @Subscribe.EventSourcedEntity(GeneratorEntity.class)
@@ -65,6 +68,8 @@ public class GeneratorsByLocationView extends View<GeneratorsByLocationView.Gene
           startTimeMs,
           deviceCountLimit,
           deviceCountCurrent + event.deviceCountCurrent());
-      }
     }
+  }
+
+  public record Generators(Collection<GeneratorViewRow> generators) {}
 }
