@@ -4,6 +4,7 @@ import kalix.javasdk.action.Action;
 import kalix.springsdk.KalixClient;
 import kalix.springsdk.annotations.Subscribe;
 
+@Subscribe.EventSourcedEntity(value = GeneratorEntity.class, ignoreUnknown = true)
 public class GeneratorToGeneratorAction extends Action {
   private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GeneratorToGeneratorAction.class);
   private final KalixClient kalixClient;
@@ -12,7 +13,6 @@ public class GeneratorToGeneratorAction extends Action {
     this.kalixClient = kalixClient;
   }
 
-  @Subscribe.EventSourcedEntity(GeneratorEntity.class)
   public Effect<String> on(GeneratorEntity.GeneratedEvent event) {
     log.info("Event: {}", event);
     var path = "/generator/%s/generate".formatted(event.generatorId());

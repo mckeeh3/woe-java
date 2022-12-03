@@ -29,6 +29,8 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
   private static final Logger log = LoggerFactory.getLogger(GeneratorEntity.class);
   private static final Random random = new Random();
 
+  static int devicesPerGeneratorBatch = 32;
+
   @Override
   public State emptyState() {
     return State.empty();
@@ -118,19 +120,22 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
     }
 
     List<?> eventsFor(GenerateCommand command) {
+      if (deviceCountCurrent == deviceCountLimit) {
+        return List.of();
+      }
       var deviceBatches = createDevicesToGenerateEvents(command.generatorId());
-      var devicesToBeCreated = deviceBatches.stream()
+      var devicesToBeGenerated = deviceBatches.stream()
           .map(e -> e.devices().size())
           .reduce(0, (a, n) -> a + n);
       var events = new ArrayList<Object>();
-      events.add(new GeneratedEvent(generatorId(), deviceCountCurrent + devicesToBeCreated));
+      events.add(new GeneratedEvent(generatorId, devicesToBeGenerated, deviceCountCurrent + devicesToBeGenerated));
       events.addAll(deviceBatches);
       return events;
     }
 
     private List<DevicesToGenerateEvent> createDevicesToGenerateEvents(String generatorId) {
       var elapsedMs = epochMsNow() - startTimeMs;
-      var devicesPerBatch = 32;
+      var devicesPerBatch = devicesPerGeneratorBatch;
       var devicesToBeCreated = (int) Math.min(deviceCountLimit - deviceCountCurrent, (elapsedMs * ratePerSecond / 1000) - deviceCountCurrent);
       var deviceBatches = devicesToBeCreated / devicesPerBatch + (devicesToBeCreated % devicesPerBatch > 0 ? 1 : 0);
       if (deviceBatches == 0) {
@@ -182,11 +187,12 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
 
   public record GeneratorCreatedEvent(String generatorId, LatLng position, double radiusKm, int ratePerSecond, long startTimeMs, int deviceCountLimit) {}
 
-  public record GeneratedEvent(String generatorId, int deviceCountCurrent) {}
+  public record GeneratedEvent(String generatorId, int devicesGenerated, int deviceCountCurrent) {}
 
-  public record DevicesToGenerateEvent(String generatorId, List<Device> devices) {
+  public record DevicesToGenerateEvent(String generatorId, int devicesToBeGenerated, List<Device> devices) {
     static DevicesToGenerateEvent with(String generatorId, LatLng position, double radiusKm, int deviceCount) {
-      return new DevicesToGenerateEvent(generatorId, generateDevices(generatorId, position, radiusKm, deviceCount));
+      var devices = generateDevices(generatorId, position, radiusKm, deviceCount);
+      return new DevicesToGenerateEvent(generatorId, devices.size(), devices);
     }
 
     private static List<Device> generateDevices(String generatorId, LatLng position, double radiusKm, int deviceCount) {

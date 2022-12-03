@@ -1,7 +1,7 @@
 package io.woe;
 
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import kalix.javasdk.view.View;
 import kalix.springsdk.annotations.Query;
@@ -16,6 +16,7 @@ import java.util.Collection;
 @ViewId("generators-by-location")
 @Table("generators_by_location")
 public class GeneratorsByLocationView extends View<GeneratorsByLocationView.GeneratorViewRow> {
+  private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GeneratorsByLocationView.class);
 
   @GetMapping("/generators/by-location/{topLeftLat}/{topLeftLng}/{botRightLat}/{botRightLng}")
   @Query("""
@@ -25,12 +26,13 @@ public class GeneratorsByLocationView extends View<GeneratorsByLocationView.Gene
          AND position.lng >= :topLeftLng
          AND position.lng >= :topLeftLng
       """)
-  public Generators getGeneratorsByLocation(Double topLeftLat, Double topLeftLng, Double botRightLat, Double botRightLng) {
+  public Generators getGeneratorsByLocation(@PathVariable Double topLeftLat, @PathVariable Double topLeftLng, @PathVariable Double botRightLat, @PathVariable Double botRightLng) {
     return null;
   }
 
   @Subscribe.EventSourcedEntity(GeneratorEntity.class)
   public UpdateEffect<GeneratorViewRow> on(GeneratorEntity.GeneratorCreatedEvent event) {
+    log.info("State: {}\nEvent: {}", viewState(), event);
     return effects().updateState(new GeneratorViewRow(
         event.generatorId(),
         event.position(),
@@ -43,6 +45,7 @@ public class GeneratorsByLocationView extends View<GeneratorsByLocationView.Gene
 
   @Subscribe.EventSourcedEntity(GeneratorEntity.class)
   public UpdateEffect<GeneratorViewRow> on(GeneratorEntity.GeneratedEvent event) {
+    log.info("State: {}\nEvent: {}", viewState(), event);
     return effects().updateState(viewState().on(event));
   }
 
