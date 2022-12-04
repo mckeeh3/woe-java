@@ -1,8 +1,22 @@
 @urlPrefix = https://green-voice-3640.us-east1.kalix.app
-@topLeftLat =12.0
+@deviceId = device-id_9.4315699559546_10.4657375075661
+@topLeftLat = 12.0
 @topLeftLng = 9.0
 @botRightLat = 9.0
 @botRightLng = 12.0
+
+###
+
+GET {{urlPrefix}}/device/{{deviceId}}
+
+###
+
+PUT {{urlPrefix}}/device/{{deviceId}}/ping
+Content-Type: application/json
+
+{
+  "deviceId":"{{deviceId}}"
+}
 
 ###
 GET {{urlPrefix}}/devices/by-location/{{topLeftLat}}/{{topLeftLng}}/{{botRightLat}}/{{botRightLng}}

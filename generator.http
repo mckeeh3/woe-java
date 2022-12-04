@@ -1,12 +1,12 @@
 @urlPrefix = https://green-voice-3640.us-east1.kalix.app
 @generatorId = "generator-1"
-@position = { "lat": 10.234, "lng": 10.321 }
+@position = { "lat": 10.1, "lng": 10.1 }
 @radiusKm = 100
 @deviceCountLimit = 100
 @ratePerSecond = 10
-@topLeftLat =11.0
+@topLeftLat = 11.0
 @topLeftLng = 10.0
-@botRightLat = 10.0
+@botRightLat = 9.0
 @botRightLng = 11.0
 
 ###
