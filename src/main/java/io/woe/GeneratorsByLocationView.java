@@ -23,8 +23,8 @@ public class GeneratorsByLocationView extends View<GeneratorsByLocationView.Gene
       SELECT * AS generators FROM generators_by_location
        WHERE position.lat <= :topLeftLat
          AND position.lng >= :topLeftLng
-         AND position.lng >= :topLeftLng
-         AND position.lng >= :topLeftLng
+         AND position.lat >= :botRightLat
+         AND position.lng <= :botRightLng
       """)
   public Generators getGeneratorsByLocation(@PathVariable Double topLeftLat, @PathVariable Double topLeftLng, @PathVariable Double botRightLat, @PathVariable Double botRightLng) {
     return null;
@@ -62,6 +62,7 @@ public class GeneratorsByLocationView extends View<GeneratorsByLocationView.Gene
       long startTimeMs,
       int deviceCountLimit,
       int deviceCountCurrent) {
+
     GeneratorViewRow on(GeneratorEntity.GeneratedEvent event) {
       return new GeneratorViewRow(
           generatorId,

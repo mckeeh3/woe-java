@@ -210,8 +210,9 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
           Math.cos(lat) * Math.sin(distance / earthRadiusKm) * Math.cos(angle));
       final var lng2 = lng + Math.atan2(Math.sin(angle) * Math.sin(distance / earthRadiusKm) * Math.cos(lat),
           Math.cos(distance / earthRadiusKm) - Math.sin(lat) * Math.sin(lat2));
-      var deviceId = "device-id:%1.13f:%1.13f".formatted(lat2, lng2);
-      return new Device(deviceId, generatorId, LatLng.fromRadians(lat2, lng2));
+      var devicePosition = LatLng.fromRadians(lat2, lng2);
+      var deviceId = "device-id_%1.13f_%1.13f".formatted(devicePosition.lat(), devicePosition.lng());
+      return new Device(deviceId, generatorId, devicePosition);
     }
   }
 
