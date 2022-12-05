@@ -148,17 +148,20 @@ public class GeneratorEntityTest {
   }
 
   @Test
-  public void generateBeyondLimitTest() {
+  public void generateBeyondLimitTest() throws InterruptedException {
     var testKit = EventSourcedTestKit.of(GeneratorEntity::new);
 
     var generatorId = "generator-1";
     var deviceCountLimit = 10;
     var ratePerSecond = 1_000_000;
+    var generateDelayMs = 100;
     var command1 = createGeneratorCommand(generatorId, latLng(1, 2), 10.0, deviceCountLimit, ratePerSecond);
     {
       var result = testKit.call(e -> e.create(command1));
       assertFalse(result.isError());
     }
+
+    TimeUnit.MILLISECONDS.sleep(generateDelayMs);
 
     {
       var command = new GeneratorEntity.GenerateCommand(command1.generatorId());

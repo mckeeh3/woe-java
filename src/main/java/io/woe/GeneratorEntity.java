@@ -88,11 +88,11 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
       int deviceCountLimit,
       int deviceCountCurrent) {
 
-    public static State empty() {
+    static State empty() {
       return new State(null, null, 0, 0, epochMsNow(), 0, 0);
     }
 
-    public boolean isEmpty() {
+    boolean isEmpty() {
       return generatorId == null;
     }
 
@@ -133,7 +133,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
       return events;
     }
 
-    private List<DevicesToGenerateEvent> createDevicesToGenerateEvents(String generatorId) {
+    List<DevicesToGenerateEvent> createDevicesToGenerateEvents(String generatorId) {
       var elapsedMs = epochMsNow() - startTimeMs;
       var devicesPerBatch = devicesPerGeneratorBatch;
       var devicesToBeCreated = (int) Math.min(deviceCountLimit - deviceCountCurrent, (elapsedMs * ratePerSecond / 1000) - deviceCountCurrent);
@@ -172,11 +172,11 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
           event.deviceCountCurrent());
     }
 
-    public State on(DevicesToGenerateEvent event) {
+    State on(DevicesToGenerateEvent event) {
       return this;
     }
 
-    private static long epochMsNow() {
+    static long epochMsNow() {
       return Instant.now().toEpochMilli();
     }
   }
@@ -195,13 +195,13 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
       return new DevicesToGenerateEvent(generatorId, devices.size(), devices);
     }
 
-    private static List<Device> generateDevices(String generatorId, LatLng position, double radiusKm, int deviceCount) {
+    static List<Device> generateDevices(String generatorId, LatLng position, double radiusKm, int deviceCount) {
       return IntStream.range(0, deviceCount)
           .mapToObj(i -> nextDevice(generatorId, position, radiusKm))
           .toList();
     }
 
-    private static Device nextDevice(String generatorId, LatLng position, double radiusKm) {
+    static Device nextDevice(String generatorId, LatLng position, double radiusKm) {
       final var angle = random.nextDouble() * 2 * Math.PI;
       final var distance = random.nextDouble() * radiusKm;
       final var lat = Math.toRadians(position.lat());

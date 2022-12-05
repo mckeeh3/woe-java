@@ -77,19 +77,19 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
 
   public record State(String deviceId, LatLng position, Instant lastPing, boolean alarmOn, Instant alarmLastTriggered) {
 
-    public static State empty() {
+    static State empty() {
       return new State(null, latLng(0, 0), null, false, null);
     }
 
-    public boolean isEmpty() {
+    boolean isEmpty() {
       return deviceId == null;
     }
 
-    public DeviceCreatedEvent eventFor(CreateDeviceCommand command) {
+    DeviceCreatedEvent eventFor(CreateDeviceCommand command) {
       return new DeviceCreatedEvent(command.deviceId, command.position);
     }
 
-    public List<?> eventsFor(PingCommand command) {
+    List<?> eventsFor(PingCommand command) {
       if (alarmOn && random.nextDouble() * 100 > 95) {
         return List.of(new AlarmChangedEvent(command.deviceId, true, Instant.now()));
       } else if (!alarmOn && random.nextDouble() * 1_000 > 999) {
@@ -98,19 +98,19 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
       return List.of();
     }
 
-    public State on(DeviceCreatedEvent event) {
+    State on(DeviceCreatedEvent event) {
       if (deviceId != null) {
         return this;
       }
       return new State(event.deviceId, event.position, Instant.ofEpochSecond(0), alarmOn, Instant.now());
     }
 
-    public State on(PingedEvent event) {
+    State on(PingedEvent event) {
       var lastPinged = Instant.now();
       return new State(deviceId, position, lastPinged, alarmOn, alarmLastTriggered);
     }
 
-    public State on(AlarmChangedEvent event) {
+    State on(AlarmChangedEvent event) {
       return new State(deviceId, position, Instant.now(), event.alarmOn, event.alarmLastTriggered);
     }
   }
