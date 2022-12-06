@@ -37,7 +37,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
   }
 
   @PutMapping("/{regionId}/add-sub-region")
-  public Effect<String> addSubRegion(@RequestBody AddSubRegionCommand command) {
+  public Effect<String> addSubRegion(@RequestBody UpdateSubRegionCommand command) {
     log.info("State: {}\nCommand: {}", currentState(), command);
     return effects()
         .emitEvents(currentState().eventFor(command))
@@ -65,7 +65,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
   }
 
   @EventHandler
-  public State on(RegionChangedEvent event) {
+  public State on(RegionUpdatedEvent event) {
     log.info("State: {}\nEvent: {}", currentState(), event);
     return currentState().on(event);
   }
@@ -86,16 +86,17 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
       var events = new ArrayList<>();
       events.add(new DeviceAddedEvent(command.deviceId(), command.position(), command.alarmOn()));
       if (!hasChanged) {
-        events.add(new RegionChangedEvent(regionId, region));
+        events.add(new RegionUpdatedEvent(region));
       }
       return events;
     }
 
-    List<?> eventFor(AddSubRegionCommand command) {
+    List<?> eventFor(UpdateSubRegionCommand command) {
       var events = new ArrayList<>();
       events.add(new SubRegionAddedEvent(command.subRegion()));
       if (!hasChanged) {
-        events.add(new RegionChangedEvent(regionId, region));
+        var region = regionAbove(command.subRegion()).add(command.subRegion.deviceCount(), command.subRegion.deviceAlarmCount());
+        events.add(new RegionUpdatedEvent(region));
       }
       return events;
     }
@@ -103,7 +104,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
     CurrentStateReleasedEvent eventFor(ReleaseCurrentStateCommand command) {
       var deviceCount = subRegions.stream().mapToInt(Region::deviceCount).sum();
       var deviceAlarmCount = subRegions.stream().mapToInt(Region::deviceAlarmCount).sum();
-      return new CurrentStateReleasedEvent(regionId, region, deviceCount, deviceAlarmCount);
+      return new CurrentStateReleasedEvent(region, deviceCount, deviceAlarmCount);
     }
 
     State on(DeviceAddedEvent event) {
@@ -120,18 +121,21 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
     }
 
     State on(SubRegionAddedEvent event) {
-      var region = regionAbove(event.subRegion());
+      var subRegion = event.subRegion();
+      var region = regionAbove(subRegion);
 
       if (regionId == null) {
-        return new State(regionIdFor(region), region, List.of(event.subRegion()), true);
+        return new State(regionIdFor(region), region.add(subRegion.deviceCount(), subRegion.deviceAlarmCount()), List.of(event.subRegion()), true);
       }
 
       var subRegions = new ArrayList<Region>(this.subRegions);
       subRegions.add(event.subRegion());
-      return this.with(subRegions, true);
+      var deviceCount = subRegions.stream().mapToInt(Region::deviceCount).sum();
+      var deviceAlarmCount = subRegions.stream().mapToInt(Region::deviceAlarmCount).sum();
+      return new State(regionId, region.add(deviceCount, deviceAlarmCount), subRegions, true);
     }
 
-    State on(RegionChangedEvent event) {
+    State on(RegionUpdatedEvent event) {
       return new State(regionId, region, subRegions, true);
     }
 
@@ -147,7 +151,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
 
   public record AddDeviceCommand(String deviceId, LatLng position, boolean alarmOn) {}
 
-  public record AddSubRegionCommand(Region subRegion) {}
+  public record UpdateSubRegionCommand(Region subRegion) {}
 
   public record ReleaseCurrentStateCommand(String regionId) {}
 
@@ -155,7 +159,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
 
   public record SubRegionAddedEvent(Region subRegion) {}
 
-  public record RegionChangedEvent(String regionId, Region region) {}
+  public record RegionUpdatedEvent(Region region) {}
 
-  public record CurrentStateReleasedEvent(String regionId, Region region, int deviceCount, int deviceAlarmCount) {}
+  public record CurrentStateReleasedEvent(Region region, int deviceCount, int deviceAlarmCount) {}
 }

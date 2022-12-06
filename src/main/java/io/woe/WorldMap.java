@@ -123,6 +123,10 @@ interface WorldMap {
       return new Region(zoom, latLng(topLeftLat, topLeftLng), latLng(botRightLat, botRightLng), 0, 0);
     }
 
+    Region add(int deviceCount, int deviceAlarmCount) {
+      return new Region(zoom, topLeft, botRight, this.deviceCount + deviceCount, this.deviceAlarmCount + deviceAlarmCount);
+    }
+
     boolean contains(LatLng latLng) {
       return topLeft.lat >= latLng.lat && botRight.lat <= latLng.lat
           && topLeft.lng <= latLng.lng && botRight.lng >= latLng.lng;
