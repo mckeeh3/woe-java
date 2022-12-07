@@ -40,7 +40,7 @@ interface WorldMap {
   static List<Region> subRegionsFor(Region region) {
     switch (region.zoom) {
     case 0:
-      return subRegionsForZoom0();
+      return subRegionsForZoom1();
     case 1:
     case 2:
       return subRegionsForZoomX(region, 3);
@@ -53,7 +53,7 @@ interface WorldMap {
     return new Region(zoom, topLeft, botRight, 0, 0);
   }
 
-  private static List<Region> subRegionsForZoom0() {
+  private static List<Region> subRegionsForZoom1() {
     var regions = new ArrayList<Region>();
     regions.add(region(1, topLeft(90, -180), botRight(-90, 0)));
     regions.add(region(1, topLeft(90, 0), botRight(-90, 180)));
@@ -123,13 +123,19 @@ interface WorldMap {
       return new Region(zoom, latLng(topLeftLat, topLeftLng), latLng(botRightLat, botRightLng), 0, 0);
     }
 
-    Region add(int deviceCount, int deviceAlarmCount) {
-      return new Region(zoom, topLeft, botRight, this.deviceCount + deviceCount, this.deviceAlarmCount + deviceAlarmCount);
+    Region with(int deviceCount, int deviceAlarmCount) {
+      return new Region(zoom, topLeft, botRight, deviceCount, deviceAlarmCount);
     }
 
     boolean contains(LatLng latLng) {
       return topLeft.lat >= latLng.lat && botRight.lat <= latLng.lat
           && topLeft.lng <= latLng.lng && botRight.lng >= latLng.lng;
+    }
+
+    boolean eqShape(Region region) {
+      return zoom == region.zoom
+          && topLeft.lat == region.topLeft.lat && topLeft.lng == region.topLeft.lng
+          && botRight.lat == region.botRight.lat && botRight.lng == region.botRight.lng;
     }
   }
 }

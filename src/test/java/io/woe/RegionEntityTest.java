@@ -38,6 +38,32 @@ public class RegionEntityTest {
   }
 
   @Test
+  public void addDeviceIdempotenceTest() {
+    var testKit = EventSourcedTestKit.of(RegionEntity::new);
+
+    var deviceId = "device-1";
+    var position = latLng(1.0, 2.0);
+    var command1 = new RegionEntity.AddDeviceCommand(deviceId, position, false);
+    {
+      var result = testKit.call(e -> e.addDevice(command1));
+      assertFalse(result.isError());
+      assertEquals(2, result.getAllEvents().size());
+    }
+
+    {
+      var result = testKit.call(e -> e.addDevice(command1));
+      assertFalse(result.isError());
+      assertEquals(1, result.getAllEvents().size());
+    }
+
+    {
+      var state = testKit.getState();
+      assertEquals(1, state.subRegions().size());
+      assertTrue(state.hasChanged());
+    }
+  }
+
+  @Test
   public void addMultipleDevicesTest() {
     var testKit = EventSourcedTestKit.of(RegionEntity::new);
 
@@ -98,23 +124,23 @@ public class RegionEntityTest {
     var subRegions = subRegionsFor(region);
 
     {
-      var subRegion = subRegions.get(0).add(deviceCount, deviceAlarmCount);
+      var subRegion = subRegions.get(0).with(deviceCount, deviceAlarmCount);
       var command = new RegionEntity.UpdateSubRegionCommand(subRegion);
-      var result = testKit.call(e -> e.addSubRegion(command));
+      var result = testKit.call(e -> e.updateSubRegion(command));
       assertFalse(result.isError());
 
-      var event1 = result.getNextEventOfType(RegionEntity.SubRegionAddedEvent.class);
+      var event1 = result.getNextEventOfType(RegionEntity.SubRegionUpdatedEvent.class);
       assertEquals(command.subRegion(), event1.subRegion());
 
       var event2 = result.getNextEventOfType(RegionEntity.RegionUpdatedEvent.class);
-      assertEquals(region.add(deviceCount, deviceAlarmCount), event2.region());
+      assertEquals(region.with(deviceCount, deviceAlarmCount), event2.region());
     }
 
     {
       var state = testKit.getState();
       assertEquals(1, state.subRegions().size());
-      assertEquals(subRegions.get(0).add(deviceCount, deviceAlarmCount), state.subRegions().get(0));
-      assertEquals(region.add(deviceCount, deviceAlarmCount), state.region());
+      assertEquals(subRegions.get(0).with(deviceCount, deviceAlarmCount), state.subRegions().get(0));
+      assertEquals(region.with(deviceCount, deviceAlarmCount), state.region());
     }
   }
 
@@ -128,25 +154,75 @@ public class RegionEntityTest {
     var subRegions = subRegionsFor(region);
 
     {
-      var subRegion = subRegions.get(0).add(deviceCount, deviceAlarmCount);
+      var subRegion = subRegions.get(0).with(deviceCount, deviceAlarmCount);
       var command = new RegionEntity.UpdateSubRegionCommand(subRegion);
-      var result = testKit.call(e -> e.addSubRegion(command));
+      var result = testKit.call(e -> e.updateSubRegion(command));
       assertFalse(result.isError());
     }
 
     {
-      var subRegion = subRegions.get(1).add(deviceCount, deviceAlarmCount);
+      var subRegion = subRegions.get(1).with(deviceCount, deviceAlarmCount);
       var command = new RegionEntity.UpdateSubRegionCommand(subRegion);
-      var result = testKit.call(e -> e.addSubRegion(command));
+      var result = testKit.call(e -> e.updateSubRegion(command));
       assertFalse(result.isError());
     }
 
     {
       var state = testKit.getState();
       assertEquals(2, state.subRegions().size());
-      assertEquals(subRegions.get(0).add(deviceCount, deviceAlarmCount), state.subRegions().get(0));
-      assertEquals(subRegions.get(1).add(deviceCount, deviceAlarmCount), state.subRegions().get(1));
-      assertEquals(region.add(deviceCount * 2, deviceAlarmCount * 2), state.region());
+      assertEquals(subRegions.get(0).with(deviceCount, deviceAlarmCount), state.subRegions().get(0));
+      assertEquals(subRegions.get(1).with(deviceCount, deviceAlarmCount), state.subRegions().get(1));
+      assertEquals(region.with(deviceCount * 2, deviceAlarmCount * 2), state.region());
     }
+  }
+
+  @Test
+  public void addSameSubRegionTwice() {
+    var testKit = EventSourcedTestKit.of(RegionEntity::new);
+
+    var region = regionAtLatLng(zoomMax - 2, latLng(1.5, 1.5));
+    var subRegions = subRegionsFor(region);
+
+    {
+      var deviceCount = 10;
+      var deviceAlarmCount = 5;
+      var subRegion = subRegions.get(0).with(deviceCount, deviceAlarmCount);
+      var command = new RegionEntity.UpdateSubRegionCommand(subRegion);
+      var result = testKit.call(e -> e.updateSubRegion(command));
+      assertFalse(result.isError());
+    }
+
+    {
+      var deviceCount = 15;
+      var deviceAlarmCount = 10;
+      var subRegion = subRegions.get(0).with(deviceCount, deviceAlarmCount);
+      var command = new RegionEntity.UpdateSubRegionCommand(subRegion);
+      var result = testKit.call(e -> e.updateSubRegion(command));
+      assertFalse(result.isError());
+    }
+
+    {
+      var deviceCount = 20;
+      var deviceAlarmCount = 15;
+      var subRegion = subRegions.get(0).with(deviceCount, deviceAlarmCount);
+      var command = new RegionEntity.UpdateSubRegionCommand(subRegion);
+      var result = testKit.call(e -> e.updateSubRegion(command));
+      assertFalse(result.isError());
+
+      var state = testKit.getState();
+      assertEquals(1, state.subRegions().size());
+      assertEquals(subRegions.get(0).with(deviceCount, deviceAlarmCount), state.subRegions().get(0));
+      assertEquals(region.with(deviceCount, deviceAlarmCount), state.region());
+    }
+  }
+
+  @Test
+  public void updateSubRegionAtZoom1Test() {
+    var testKit = EventSourcedTestKit.of(RegionEntity::new);
+
+    var subRegion = regionAtLatLng(1, latLng(0.0, 0.0));
+    var command = new RegionEntity.UpdateSubRegionCommand(subRegion);
+    var result = testKit.call(e -> e.updateSubRegion(command));
+    assertTrue(result.isError());
   }
 }

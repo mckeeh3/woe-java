@@ -17,7 +17,8 @@ public class GeneratorToGeneratorAction extends Action {
     log.info("Event: {}", event);
     var path = "/generator/%s/generate".formatted(event.generatorId());
     var command = new GeneratorEntity.GenerateCommand(event.generatorId());
-    var deferredCall = kalixClient.put(path, command, String.class);
+    var returnType = String.class;
+    var deferredCall = kalixClient.put(path, command, returnType);
 
     return effects().forward(deferredCall);
   }

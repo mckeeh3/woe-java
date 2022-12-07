@@ -11,7 +11,7 @@ public class GeneratorToDeviceAction extends Action {
   private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GeneratorToDeviceAction.class);
   private final KalixClient kalixClient;
 
-  public GeneratorToDeviceAction(kalix.springsdk.KalixClient kalixClient) {
+  public GeneratorToDeviceAction(KalixClient kalixClient) {
     this.kalixClient = kalixClient;
   }
 
