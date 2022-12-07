@@ -143,12 +143,15 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
     }
 
     State on(CurrentStateReleasedEvent event) {
-      var region = new Region(zoomMax, this.region.topLeft(), this.region.botRight(), event.deviceCount, event.deviceAlarmCount);
-      return new State(regionId, region, subRegions, false);
+      return with(event.deviceCount, event.deviceAlarmCount);
     }
 
     State with(List<Region> subRegions, boolean changed) {
       return new State(regionId, region, subRegions, changed);
+    }
+
+    State with(int deviceCount, int deviceAlarmCount) {
+      return new State(regionId, region.with(deviceCount, deviceAlarmCount), subRegions, hasChanged);
     }
   }
 

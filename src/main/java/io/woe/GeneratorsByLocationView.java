@@ -15,6 +15,7 @@ import java.util.Collection;
 
 @ViewId("generators-by-location")
 @Table("generators_by_location")
+@Subscribe.EventSourcedEntity(value = GeneratorEntity.class, ignoreUnknown = true)
 public class GeneratorsByLocationView extends View<GeneratorsByLocationView.GeneratorViewRow> {
   private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GeneratorsByLocationView.class);
 
@@ -30,7 +31,6 @@ public class GeneratorsByLocationView extends View<GeneratorsByLocationView.Gene
     return null;
   }
 
-  @Subscribe.EventSourcedEntity(GeneratorEntity.class)
   public UpdateEffect<GeneratorViewRow> on(GeneratorEntity.GeneratorCreatedEvent event) {
     log.info("State: {}\nEvent: {}", viewState(), event);
     return effects().updateState(new GeneratorViewRow(
@@ -43,15 +43,9 @@ public class GeneratorsByLocationView extends View<GeneratorsByLocationView.Gene
         0));
   }
 
-  @Subscribe.EventSourcedEntity(GeneratorEntity.class)
   public UpdateEffect<GeneratorViewRow> on(GeneratorEntity.GeneratedEvent event) {
     log.info("State: {}\nEvent: {}", viewState(), event);
     return effects().updateState(viewState().on(event));
-  }
-
-  @Subscribe.EventSourcedEntity(GeneratorEntity.class)
-  public UpdateEffect<GeneratorViewRow> on(GeneratorEntity.DevicesToGenerateEvent event) {
-    return effects().ignore();
   }
 
   public record GeneratorViewRow(
