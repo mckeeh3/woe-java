@@ -98,15 +98,15 @@ public class RegionEntityTest {
     }
 
     {
-      var command = new RegionEntity.ReleaseCurrentStateCommand(regionIdFor(region));
+      var command = new RegionEntity.ReleaseCurrentStateCommand(region);
       var result = testKit.call(e -> e.releaseCurrentState(command));
       assertFalse(result.isError());
 
       var events = result.getAllEvents();
       assertEquals(1, events.size());
       var event = result.getNextEventOfType(RegionEntity.CurrentStateReleasedEvent.class);
-      assertEquals(2, event.deviceCount());
-      assertEquals(0, event.deviceAlarmCount());
+      assertEquals(2, event.region().deviceCount());
+      assertEquals(0, event.region().deviceAlarmCount());
 
       var state = testKit.getState();
       assertEquals(2, state.region().deviceCount());
@@ -124,7 +124,7 @@ public class RegionEntityTest {
     var subRegions = subRegionsFor(region);
 
     {
-      var subRegion = subRegions.get(0).with(deviceCount, deviceAlarmCount);
+      var subRegion = with(subRegions.get(0), deviceCount, deviceAlarmCount);
       var command = new RegionEntity.UpdateSubRegionCommand(subRegion);
       var result = testKit.call(e -> e.updateSubRegion(command));
       assertFalse(result.isError());
@@ -133,14 +133,14 @@ public class RegionEntityTest {
       assertEquals(command.subRegion(), event1.subRegion());
 
       var event2 = result.getNextEventOfType(RegionEntity.RegionUpdatedEvent.class);
-      assertEquals(region.with(deviceCount, deviceAlarmCount), event2.region());
+      assertEquals(with(region, deviceCount, deviceAlarmCount), event2.region());
     }
 
     {
       var state = testKit.getState();
       assertEquals(1, state.subRegions().size());
-      assertEquals(subRegions.get(0).with(deviceCount, deviceAlarmCount), state.subRegions().get(0));
-      assertEquals(region.with(deviceCount, deviceAlarmCount), state.region());
+      assertEquals(with(subRegions.get(0), deviceCount, deviceAlarmCount), state.subRegions().get(0));
+      assertEquals(with(region, deviceCount, deviceAlarmCount), state.region());
     }
   }
 
@@ -154,14 +154,14 @@ public class RegionEntityTest {
     var subRegions = subRegionsFor(region);
 
     {
-      var subRegion = subRegions.get(0).with(deviceCount, deviceAlarmCount);
+      var subRegion = with(subRegions.get(0), deviceCount, deviceAlarmCount);
       var command = new RegionEntity.UpdateSubRegionCommand(subRegion);
       var result = testKit.call(e -> e.updateSubRegion(command));
       assertFalse(result.isError());
     }
 
     {
-      var subRegion = subRegions.get(1).with(deviceCount, deviceAlarmCount);
+      var subRegion = with(subRegions.get(1), deviceCount, deviceAlarmCount);
       var command = new RegionEntity.UpdateSubRegionCommand(subRegion);
       var result = testKit.call(e -> e.updateSubRegion(command));
       assertFalse(result.isError());
@@ -170,9 +170,9 @@ public class RegionEntityTest {
     {
       var state = testKit.getState();
       assertEquals(2, state.subRegions().size());
-      assertEquals(subRegions.get(0).with(deviceCount, deviceAlarmCount), state.subRegions().get(0));
-      assertEquals(subRegions.get(1).with(deviceCount, deviceAlarmCount), state.subRegions().get(1));
-      assertEquals(region.with(deviceCount * 2, deviceAlarmCount * 2), state.region());
+      assertEquals(with(subRegions.get(0), deviceCount, deviceAlarmCount), state.subRegions().get(0));
+      assertEquals(with(subRegions.get(1), deviceCount, deviceAlarmCount), state.subRegions().get(1));
+      assertEquals(with(region, deviceCount * 2, deviceAlarmCount * 2), state.region());
     }
   }
 
@@ -186,7 +186,7 @@ public class RegionEntityTest {
     {
       var deviceCount = 10;
       var deviceAlarmCount = 5;
-      var subRegion = subRegions.get(0).with(deviceCount, deviceAlarmCount);
+      var subRegion = with(subRegions.get(0), deviceCount, deviceAlarmCount);
       var command = new RegionEntity.UpdateSubRegionCommand(subRegion);
       var result = testKit.call(e -> e.updateSubRegion(command));
       assertFalse(result.isError());
@@ -195,7 +195,7 @@ public class RegionEntityTest {
     {
       var deviceCount = 15;
       var deviceAlarmCount = 10;
-      var subRegion = subRegions.get(0).with(deviceCount, deviceAlarmCount);
+      var subRegion = with(subRegions.get(0), deviceCount, deviceAlarmCount);
       var command = new RegionEntity.UpdateSubRegionCommand(subRegion);
       var result = testKit.call(e -> e.updateSubRegion(command));
       assertFalse(result.isError());
@@ -204,15 +204,15 @@ public class RegionEntityTest {
     {
       var deviceCount = 20;
       var deviceAlarmCount = 15;
-      var subRegion = subRegions.get(0).with(deviceCount, deviceAlarmCount);
+      var subRegion = with(subRegions.get(0), deviceCount, deviceAlarmCount);
       var command = new RegionEntity.UpdateSubRegionCommand(subRegion);
       var result = testKit.call(e -> e.updateSubRegion(command));
       assertFalse(result.isError());
 
       var state = testKit.getState();
       assertEquals(1, state.subRegions().size());
-      assertEquals(subRegions.get(0).with(deviceCount, deviceAlarmCount), state.subRegions().get(0));
-      assertEquals(region.with(deviceCount, deviceAlarmCount), state.region());
+      assertEquals(with(subRegions.get(0), deviceCount, deviceAlarmCount), state.subRegions().get(0));
+      assertEquals(with(region, deviceCount, deviceAlarmCount), state.region());
     }
   }
 
@@ -224,5 +224,9 @@ public class RegionEntityTest {
     var command = new RegionEntity.UpdateSubRegionCommand(subRegion);
     var result = testKit.call(e -> e.updateSubRegion(command));
     assertTrue(result.isError());
+  }
+
+  private static Region with(Region region, int deviceCount, int deviceAlarmCount) {
+    return new Region(region.zoom(), region.topLeft(), region.botRight(), deviceCount, deviceAlarmCount);
   }
 }

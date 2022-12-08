@@ -1,17 +1,16 @@
 package io.woe;
 
+import java.util.Collection;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import io.woe.WorldMap.LatLng;
 import kalix.javasdk.view.View;
 import kalix.springsdk.annotations.Query;
 import kalix.springsdk.annotations.Subscribe;
 import kalix.springsdk.annotations.Table;
 import kalix.springsdk.annotations.ViewId;
-
-import static io.woe.WorldMap.*;
-
-import java.util.Collection;
 
 @ViewId("generators-by-location")
 @Table("generators_by_location")
@@ -65,7 +64,7 @@ public class GeneratorsByLocationView extends View<GeneratorsByLocationView.Gene
           ratePerSecond,
           startTimeMs,
           deviceCountLimit,
-          deviceCountCurrent + event.deviceCountCurrent());
+          event.deviceCountCurrent());
     }
   }
 

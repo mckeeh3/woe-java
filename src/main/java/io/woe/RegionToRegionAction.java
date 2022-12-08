@@ -20,7 +20,7 @@ public class RegionToRegionAction extends Action {
     var region = event.region();
     var regionId = regionIdFor(region);
     var path = "/region/%s/release-current-state".formatted(regionId);
-    var command = new RegionEntity.ReleaseCurrentStateCommand(regionId);
+    var command = new RegionEntity.ReleaseCurrentStateCommand(region);
     var returnType = String.class;
     var deferredCall = kalixClient.put(path, command, returnType);
 
