@@ -123,9 +123,13 @@ interface WorldMap {
       return new Region(zoom, latLng(topLeftLat, topLeftLng), latLng(botRightLat, botRightLng), 0, 0);
     }
 
-    Region with(List<Region> subRegions) {
+    Region updateCounts(List<Region> subRegions) {
       var deviceCount = subRegions.stream().mapToInt(Region::deviceCount).sum();
       var deviceAlarmCount = subRegions.stream().mapToInt(Region::deviceAlarmCount).sum();
+      return new Region(zoom, topLeft, botRight, deviceCount, deviceAlarmCount);
+    }
+
+    Region updateCounts(int deviceCount, int deviceAlarmCount) {
       return new Region(zoom, topLeft, botRight, deviceCount, deviceAlarmCount);
     }
 

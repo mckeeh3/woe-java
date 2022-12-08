@@ -1,9 +1,13 @@
 @urlPrefix = https://green-voice-3640.us-east1.kalix.app
 @deviceId = device-id_9.4315699559546_10.4657375075661
-@topLeftLat = 12.0
-@topLeftLng = 9.0
-@botRightLat = 9.0
-@botRightLng = 12.0
+# @topLeftLat = 11.0
+# @topLeftLng = 9.0
+# @botRightLat = 9.0
+# @botRightLng = 11.0
+@topLeftLat = 90.0
+@topLeftLng = 0.0
+@botRightLat = -90.0
+@botRightLng = 180.0
 
 ###
 

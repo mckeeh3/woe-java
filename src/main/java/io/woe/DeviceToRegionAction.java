@@ -17,10 +17,11 @@ public class DeviceToRegionAction extends Action {
 
   public Effect<String> on(DeviceEntity.DeviceCreatedEvent event) {
     log.info("Event: {}", event);
-    var region = regionAtLatLng(zoomMax - 1, event.position());
+    var subRegion = new Region(zoomMax, event.position(), event.position(), 1, 0);
+    var region = regionAbove(subRegion);
     var regionId = regionIdFor(region);
-    var path = "/region/%s/add-device".formatted(regionId);
-    var command = new RegionEntity.AddDeviceCommand(event.deviceId(), event.position(), false);
+    var path = "/region/%s/update-sub-region".formatted(regionId);
+    var command = new RegionEntity.UpdateSubRegionCommand(subRegion);
     var returnType = String.class;
     var deferredCall = kalixClient.put(path, command, returnType);
 
