@@ -31,7 +31,9 @@ public class GeneratorEntityTest {
 
       var event = result.getNextEventOfType(GeneratorEntity.GeneratorCreatedEvent.class);
       assertEquals(generatorId, event.generatorId());
+    }
 
+    {
       var state = testKit.getState();
       assertEquals(generatorId, state.generatorId());
       assertEquals(position, state.position());

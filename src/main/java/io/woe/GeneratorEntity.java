@@ -38,7 +38,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
 
   @PostMapping("/{generatorId}/create")
   public Effect<String> create(@RequestBody CreateGeneratorCommand command) {
-    log.info("State: {}\nCommand: {}", currentState(), command);
+    log.info("EntityId: {}\nState: {}\nCommand: {}", commandContext().entityId(), currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -46,7 +46,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
 
   @PutMapping("/{generatorId}/generate")
   public Effect<String> generate(@RequestBody GenerateCommand command) {
-    log.info("State: {}\nCommand: {}", currentState(), command);
+    log.info("EntityId: {}\nState: {}\nCommand: {}", commandContext().entityId(), currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -54,7 +54,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
 
   @GetMapping("/{generatorId}")
   public Effect<GeneratorEntity.State> get(@PathVariable String generatorId) {
-    log.info("GeneratorId: {}\nState: {}", generatorId, currentState());
+    log.info("EntityId: {}\nGeneratorId: {}\nState: {}", commandContext().entityId(), generatorId, currentState());
     if (currentState().isEmpty()) {
       return effects().error("Generator not created");
     }
@@ -97,7 +97,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
     }
 
     List<?> eventsFor(CreateGeneratorCommand command) {
-      if (generatorId != null) {
+      if (!isEmpty()) {
         return List.of(new GeneratorCreatedEvent(
             generatorId,
             position,

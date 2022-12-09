@@ -75,8 +75,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
       var events = new ArrayList<>();
       events.add(new SubRegionUpdatedEvent(command.subRegion()));
       if (!hasChanged) {
-        var subRegions = new ArrayList<Region>(this.subRegions.stream().filter(r -> !(r.eqShape(command.subRegion))).toList());
-        subRegions.add(command.subRegion());
+        var subRegions = updateSubRegions(this.subRegions, command.subRegion());
         events.add(new RegionUpdatedEvent(region.updateCounts(subRegions)));
       }
       return events;
@@ -95,8 +94,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
         return new State(region.updateCounts(subRegions), subRegions, true);
       }
 
-      var subRegions = new ArrayList<Region>(this.subRegions.stream().filter(r -> !(r.eqShape(event.subRegion))).toList());
-      subRegions.add(event.subRegion());
+      var subRegions = updateSubRegions(this.subRegions, event.subRegion());
       return new State(region.updateCounts(subRegions), subRegions, true);
     }
 
@@ -135,6 +133,15 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
         return region;
       }
       return event.region();
+    }
+
+    private List<Region> updateSubRegions(List<Region> subRegions, Region subRegion) {
+      if (subRegions.isEmpty()) {
+        return List.of(subRegion);
+      }
+      var newSubRegions = new ArrayList<Region>(subRegions.stream().filter(r -> !(r.eqShape(subRegion))).toList());
+      newSubRegions.add(subRegion);
+      return newSubRegions;
     }
   }
 
