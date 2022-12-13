@@ -15,47 +15,48 @@ import kalix.springsdk.annotations.Subscribe;
 import kalix.springsdk.annotations.Table;
 import kalix.springsdk.annotations.ViewId;
 
-@ViewId("devices-by-location")
+@ViewId("devices-by-location-v2")
 @Table("devices_by_location")
+@Subscribe.EventSourcedEntity(value = DeviceEntity.class, ignoreUnknown = true)
 public class DevicesByLocationView extends View<DevicesByLocationView.DeviceViewRow> {
   private static final Logger log = LoggerFactory.getLogger(DevicesByLocationView.class);
 
-  @GetMapping("/devices/by-location/{topLeftLat}/{topLeftLng}/{botRightLat}/{botRightLng}")
+  @GetMapping("/devices/by-location/{topLeftLat}/{topLeftLng}/{botRightLat}/{botRightLng}/{nextPageToken}")
   @Query("""
-      SELECT * AS devices FROM devices_by_location
+      SELECT * AS devices, next_page_token() AS nextPageToken, has_more() AS hasMore
+        FROM devices_by_location
+      OFFSET page_token_offset(:nextPageToken)
+       LIMIT 1000
        WHERE position.lat <= :topLeftLat
          AND position.lng >= :topLeftLng
          AND position.lat >= :botRightLat
          AND position.lng <= :botRightLng
       """)
-  public Devices getDevicesByLocation(@PathVariable Double topLeftLat, @PathVariable Double topLeftLng, @PathVariable Double botRightLat, @PathVariable Double botRightLng) {
+  public Devices getDevicesByLocation(
+      @PathVariable Double topLeftLat,
+      @PathVariable Double topLeftLng,
+      @PathVariable Double botRightLat,
+      @PathVariable Double botRightLng,
+      @PathVariable String nextPageToken) {
     return null;
   }
 
-  @Subscribe.EventSourcedEntity(DeviceEntity.class)
   public UpdateEffect<DeviceViewRow> on(DeviceEntity.DeviceCreatedEvent event) {
     log.info("State: {}\nEvent: {}", viewState(), event);
-    return effects().updateState(new DeviceViewRow(
-        event.deviceId(),
-        event.position(),
-        false));
+    return effects().updateState(new DeviceViewRow(event.deviceId(), event.position(), false));
   }
 
-  @Subscribe.EventSourcedEntity(DeviceEntity.class)
   public UpdateEffect<DeviceViewRow> on(DeviceEntity.AlarmChangedEvent event) {
     log.info("State: {}\nEvent: {}", viewState(), event);
     return effects().updateState(viewState().on(event));
   }
 
-  public record DeviceViewRow(
-      String deviceId,
-      LatLng position,
-      boolean alarmOn) {
+  public record DeviceViewRow(String deviceId, LatLng position, boolean alarmOn) {
 
     public DeviceViewRow on(AlarmChangedEvent event) {
       return new DeviceViewRow(deviceId, position, event.alarmOn());
     }
   }
 
-  public record Devices(Collection<DeviceViewRow> devices) {}
+  public record Devices(Collection<DeviceViewRow> devices, String nextPageToken, boolean hasMore) {}
 }

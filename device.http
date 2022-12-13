@@ -8,6 +8,7 @@
 @topLeftLng = 0.0
 @botRightLat = -90.0
 @botRightLng = 180.0
+@nextPageToken =
 
 ###
 
@@ -23,4 +24,4 @@ Content-Type: application/json
 }
 
 ###
-GET {{urlPrefix}}/devices/by-location/{{topLeftLat}}/{{topLeftLng}}/{{botRightLat}}/{{botRightLng}}
+GET {{urlPrefix}}/devices/by-location/{{topLeftLat}}/{{topLeftLng}}/{{botRightLat}}/{{botRightLng}}/{{nextPageToken}}

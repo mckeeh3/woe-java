@@ -21,6 +21,7 @@ public class GeneratorsByLocationView extends View<GeneratorsByLocationView.Gene
   @GetMapping("/generators/by-location/{topLeftLat}/{topLeftLng}/{botRightLat}/{botRightLng}")
   @Query("""
       SELECT * AS generators FROM generators_by_location
+       LIMIT 1000
        WHERE position.lat <= :topLeftLat
          AND position.lng >= :topLeftLng
          AND position.lat >= :botRightLat

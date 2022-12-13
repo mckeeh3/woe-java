@@ -21,6 +21,7 @@ public class RegionByLocationView extends View<RegionByLocationView.RegionViewRo
   @GetMapping("/regions/by-location/{zoom}/{topLeftLat}/{topLeftLng}/{botRightLat}/{botRightLng}")
   @Query("""
       SELECT * AS regions FROM regions_by_location
+       LIMIT 1000
        WHERE region.zoom = :zoom
          AND region.topLeft.lat <= :topLeftLat
          AND region.topLeft.lng >= :topLeftLng

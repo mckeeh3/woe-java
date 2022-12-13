@@ -1,6 +1,6 @@
 @urlPrefix = https://green-voice-3640.us-east1.kalix.app
 
-# Covers the whole world
+Covers the whole world
 @zoom = 1
 @topLeftLat = 90.0
 @topLeftLng = 0.0
@@ -8,10 +8,10 @@
 @botRightLng = 180.0
 
 # @zoom = 17
-# @topLeftLat = 20.01
-# @topLeftLng = 9.99
-# @botRightLat = 19.99
-# @botRightLng = 10.01
+# @topLeftLat = 20.10
+# @topLeftLng = 9.90
+# @botRightLat = 19.90
+# @botRightLng = 10.10
 
 ###
 
