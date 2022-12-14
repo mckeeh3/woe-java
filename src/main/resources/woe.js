@@ -1049,14 +1049,20 @@ function scheduleNextDeviceQuery() {
 
 function queryDevices() {
   const zoom = worldMap.getZoom();
-  if (zoom < 13) {
+  if (zoom < 10) {
+    queryResponseDevices = [];
     scheduleNextDeviceQuery();
     return;
   }
   const startTimeMs = performance.now();
   const topLeft = worldMap.pixelToLatLng(0, 0);
   const botRight = worldMap.pixelToLatLng(windowWidth - 1, windowHeight - 1);
-  const path = urlPrefix + `/devices/by-location/${topLeft.lat}/${topLeft.lng}/${botRight.lat}/${botRight.lng}`;
+  let nextPageToken = '';
+  let hasMore = false;
+  let path = '';
+  let devices = [];
+
+  path = urlPrefix + `/devices/by-location/${topLeft.lat}/${topLeft.lng}/${botRight.lat}/${botRight.lng}/${nextPageToken}`;
   httpGet(path, 'json', responseDevices, httpErrorQueryDevices);
 
   function isNotEmpty(json) {
@@ -1064,9 +1070,20 @@ function queryDevices() {
   }
 
   function responseDevices(json) {
-    queryResponseDevices = isNotEmpty(json) ? json.devices : [];
-    logResponse(startTimeMs, queryResponseDevices, 'devices');
-    scheduleNextDeviceQuery();
+    if (isNotEmpty(json)) {
+      nextPageToken = json.nextPageToken || '';
+      hasMore = json.hasMore || false;
+      devices = devices.concat(json.devices);
+
+      if (hasMore) {
+        path = urlPrefix + `/devices/by-location/${topLeft.lat}/${topLeft.lng}/${botRight.lat}/${botRight.lng}/${nextPageToken}`;
+        httpGet(path, 'json', responseDevices, httpErrorQueryDevices);
+      } else {
+        queryResponseDevices = devices;
+        logResponse(startTimeMs, queryResponseDevices, 'devices');
+        scheduleNextDeviceQuery();
+      }
+    }
   }
 
   function httpErrorQueryDevices(error) {
