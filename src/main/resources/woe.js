@@ -1,4 +1,6 @@
-const queryIntervalMs = 1000;
+const devicesQueryIntervalMs = 1000;
+const generatorQueryIntervalMs = 1000;
+const regionQueryIntervalMs = 1000;
 
 const labelColor = [200, 0, 0, 255];
 const labelColorRadius = labelColor;
@@ -749,12 +751,13 @@ function draw() {
 
 const rateGraph = new RateGraph();
 
+// Order is important here
 function drawMapOverlay() {
-  drawZoomAndMouseLocation();
   drawLatLngGrid();
+  drawDevices();
   drawCrossHairs();
   drawGenerators();
-  drawDevices();
+  drawZoomAndMouseLocation();
   rateGraph.draw();
 }
 
@@ -831,7 +834,7 @@ function drawGenerators() {
 
 function drawDevices() {
   const zoom = worldMap.zoom();
-  const weight = zoom === 18 ? 8 : 6;
+  const weight = map(zoom, 1, 18, 0, 12);
   stroke([70, 110, 230]);
   strokeWeight(weight);
   queryResponseDevices.forEach((device) => {
@@ -1038,20 +1041,21 @@ function errorCreateGenerator(error) {
 }
 
 function scheduleNextQueries() {
-  scheduleNextDeviceQuery();
-  scheduleNextGeneratorQuery();
-  scheduleNextRegionQuery();
+  scheduleNextDeviceQuery(0);
+  scheduleNextGeneratorQuery(0);
+  scheduleNextRegionQuery(0);
 }
 
-function scheduleNextDeviceQuery() {
-  setTimeout(queryDevices, queryIntervalMs);
+function scheduleNextDeviceQuery(lastQueryDurationMs) {
+  const timeout = max(1, devicesQueryIntervalMs - lastQueryDurationMs);
+  setTimeout(queryDevices, timeout);
 }
 
 function queryDevices() {
   const zoom = worldMap.getZoom();
   if (zoom < 10) {
     queryResponseDevices = [];
-    scheduleNextDeviceQuery();
+    scheduleNextDeviceQuery(0);
     return;
   }
   const startTimeMs = performance.now();
@@ -1081,19 +1085,20 @@ function queryDevices() {
       } else {
         queryResponseDevices = devices;
         logResponse(startTimeMs, queryResponseDevices, 'devices');
-        scheduleNextDeviceQuery();
+        scheduleNextDeviceQuery(performance.now() - startTimeMs);
       }
     }
   }
 
   function httpErrorQueryDevices(error) {
     console.log('HTTP error, query devices:', error);
-    scheduleNextDeviceQuery();
+    scheduleNextDeviceQuery(0);
   }
 }
 
-function scheduleNextGeneratorQuery() {
-  setTimeout(queryGenerators, queryIntervalMs);
+function scheduleNextGeneratorQuery(lastQueryDurationMs) {
+  const timeout = max(1, generatorQueryIntervalMs - lastQueryDurationMs);
+  setTimeout(queryGenerators, timeout);
 }
 
 function queryGenerators() {
@@ -1111,7 +1116,7 @@ function queryGenerators() {
     queryResponseGenerators = isNotEmpty(json) ? json.generators : [];
     updateGenerators(queryResponseGenerators);
     logResponse(startTimeMs, queryResponseGenerators, 'generators');
-    scheduleNextGeneratorQuery();
+    scheduleNextGeneratorQuery(performance.now() - startTimeMs);
   }
 
   function updateGenerators(queryResponse) {
@@ -1154,12 +1159,13 @@ function queryGenerators() {
 
   function errorQueryGenerators(error) {
     console.log('HTTP error, query generators:', error);
-    scheduleNextGeneratorQuery();
+    scheduleNextGeneratorQuery(performance.now() - startTimeMs);
   }
 }
 
-function scheduleNextRegionQuery() {
-  setTimeout(queryRegions, queryIntervalMs);
+function scheduleNextRegionQuery(lastQueryDurationMs) {
+  const timeout = max(1, regionQueryIntervalMs - lastQueryDurationMs);
+  setTimeout(queryRegions, timeout);
 }
 
 function queryRegions() {
@@ -1177,12 +1183,12 @@ function queryRegions() {
   function responseRegions(json) {
     queryResponseRegions = isNotEmpty(json) ? json.regions : [];
     logResponse(startTimeMs, queryResponseRegions, 'regions');
-    scheduleNextRegionQuery();
+    scheduleNextRegionQuery(performance.now() - startTimeMs);
   }
 
   function httpErrorQueryRegions(error) {
     console.log('HTTP error, query regions:', error);
-    scheduleNextRegionQuery();
+    scheduleNextRegionQuery(performance.now() - startTimeMs);
   }
 }
 
