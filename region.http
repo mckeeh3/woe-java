@@ -1,6 +1,7 @@
 @urlPrefix = https://green-voice-3640.us-east1.kalix.app
+@regionId = 1_90.0000000000000_0.0000000000000_-90.0000000000000_180.0000000000000
 
-Covers the whole world
+# Covers the whole world
 @zoom = 1
 @topLeftLat = 90.0
 @topLeftLng = 0.0
@@ -12,6 +13,10 @@ Covers the whole world
 # @topLeftLng = 9.90
 # @botRightLat = 19.90
 # @botRightLng = 10.10
+
+### jshell - "%d_%1.13f_%1.13f_%1.13f_%1.13f".formatted(1, 90.0, 0.0, -90.0, 180.0)
+
+GET {{urlPrefix}}/region/{{regionId}}
 
 ###
 

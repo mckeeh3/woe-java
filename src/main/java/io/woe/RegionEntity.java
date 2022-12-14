@@ -7,6 +7,8 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -46,6 +48,15 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
         .thenReply(__ -> "OK");
   }
 
+  @GetMapping("/{regionId}")
+  public Effect<RegionEntity.State> get(@PathVariable String regionId) {
+    log.info("RegionId: {}\nState: {}", regionId, currentState());
+    if (currentState().isEmpty()) {
+      return effects().error("Region: '%s', not created".formatted(regionId));
+    }
+    return effects().reply(currentState());
+  }
+
   @EventHandler
   public State on(SubRegionUpdatedEvent event) {
     log.info("State: {}\nEvent: {}", currentState(), event);
@@ -68,6 +79,10 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
 
     static State empty() {
       return new RegionEntity.State(Region.empty(), List.of(), false);
+    }
+
+    boolean isEmpty() {
+      return region.isEmpty();
     }
 
     List<?> eventsFor(UpdateSubRegionCommand command) {

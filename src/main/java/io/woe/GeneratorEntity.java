@@ -56,7 +56,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
   public Effect<GeneratorEntity.State> get(@PathVariable String generatorId) {
     log.info("EntityId: {}\nGeneratorId: {}\nState: {}", commandContext().entityId(), generatorId, currentState());
     if (currentState().isEmpty()) {
-      return effects().error("Generator not created");
+      return effects().error("Generator: '%s', not created".formatted(generatorId));
     }
     return effects().reply(currentState());
   }

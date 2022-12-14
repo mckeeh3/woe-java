@@ -730,6 +730,7 @@ const options = {
 const generators = [];
 
 let currentGenerator = generator();
+let worldWideDeviceCounts = { devices: 0, alarms: 0 };
 
 function setup() {
   canvas = createCanvas(windowWidth, windowHeight);
@@ -741,7 +742,10 @@ function setup() {
   worldMap.onChange(mapChanged);
   grid.resize();
 
-  scheduleNextQueries();
+  scheduleNextDeviceQuery(0);
+  scheduleNextGeneratorQuery(0);
+  scheduleNextRegionQuery(0);
+  scheduleNextRegionGet();
 }
 
 function draw() {
@@ -1040,14 +1044,9 @@ function errorCreateGenerator(error) {
   console.log(error);
 }
 
-function scheduleNextQueries() {
-  scheduleNextDeviceQuery(0);
-  scheduleNextGeneratorQuery(0);
-  scheduleNextRegionQuery(0);
-}
-
 function scheduleNextDeviceQuery(lastQueryDurationMs) {
   const timeout = max(1, devicesQueryIntervalMs - lastQueryDurationMs);
+  console.log(`schedule next device query in ${timeout}ms`);
   setTimeout(queryDevices, timeout);
 }
 
@@ -1067,7 +1066,7 @@ function queryDevices() {
   let devices = [];
 
   path = urlPrefix + `/devices/by-location/${topLeft.lat}/${topLeft.lng}/${botRight.lat}/${botRight.lng}/${nextPageToken}`;
-  httpGet(path, 'json', responseDevices, httpErrorQueryDevices);
+  httpGet(path, 'json', responseDevices, errorDevices);
 
   function isNotEmpty(json) {
     return json && json.devices && json.devices.length > 0;
@@ -1081,16 +1080,19 @@ function queryDevices() {
 
       if (hasMore) {
         path = urlPrefix + `/devices/by-location/${topLeft.lat}/${topLeft.lng}/${botRight.lat}/${botRight.lng}/${nextPageToken}`;
-        httpGet(path, 'json', responseDevices, httpErrorQueryDevices);
+        httpGet(path, 'json', responseDevices, errorDevices);
       } else {
         queryResponseDevices = devices;
-        logResponse(startTimeMs, queryResponseDevices, 'devices');
+        logQueryResponse(startTimeMs, queryResponseDevices, 'devices');
         scheduleNextDeviceQuery(performance.now() - startTimeMs);
       }
+    } else {
+      queryResponseDevices = [];
+      scheduleNextDeviceQuery(0);
     }
   }
 
-  function httpErrorQueryDevices(error) {
+  function errorDevices(error) {
     console.log('HTTP error, query devices:', error);
     scheduleNextDeviceQuery(0);
   }
@@ -1106,7 +1108,7 @@ function queryGenerators() {
   const topLeft = worldMap.pixelToLatLng(0, 0);
   const botRight = worldMap.pixelToLatLng(windowWidth - 1, windowHeight - 1);
   const path = urlPrefix + `/generators/by-location/${topLeft.lat}/${topLeft.lng}/${botRight.lat}/${botRight.lng}`;
-  httpGet(path, 'json', responseGenerators, errorQueryGenerators);
+  httpGet(path, 'json', responseGenerators, errorGenerators);
 
   function isNotEmpty(json) {
     return json && json.generators && json.generators.length > 0;
@@ -1115,7 +1117,12 @@ function queryGenerators() {
   function responseGenerators(json) {
     queryResponseGenerators = isNotEmpty(json) ? json.generators : [];
     updateGenerators(queryResponseGenerators);
-    logResponse(startTimeMs, queryResponseGenerators, 'generators');
+    logQueryResponse(startTimeMs, queryResponseGenerators, 'generators');
+    scheduleNextGeneratorQuery(performance.now() - startTimeMs);
+  }
+
+  function errorGenerators(error) {
+    console.log('HTTP error, query generators:', error);
     scheduleNextGeneratorQuery(performance.now() - startTimeMs);
   }
 
@@ -1154,12 +1161,7 @@ function queryGenerators() {
   }
 
   function equal(gen, queryGen) {
-    return gen.generatorIa === queryGen.generasorId && gen.lat === queryGen.position.lat && gen.lng === queryGen.position.lng;
-  }
-
-  function errorQueryGenerators(error) {
-    console.log('HTTP error, query generators:', error);
-    scheduleNextGeneratorQuery(performance.now() - startTimeMs);
+    return gen.generatorId === queryGen.generatorId && gen.lat === queryGen.position.lat && gen.lng === queryGen.position.lng;
   }
 }
 
@@ -1174,7 +1176,7 @@ function queryRegions() {
   const topLeft = worldMap.pixelToLatLng(0, 0);
   const botRight = worldMap.pixelToLatLng(windowWidth - 1, windowHeight - 1);
   const path = urlPrefix + `/regions/by-location/${zoom}/${topLeft.lat}/${topLeft.lng}/${botRight.lat}/${botRight.lng}`;
-  httpGet(path, 'json', responseRegions, httpErrorQueryRegions);
+  httpGet(path, 'json', responseRegions, errorRegions);
 
   function isNotEmpty(json) {
     return json && json.regions && json.regions.length > 0;
@@ -1182,18 +1184,53 @@ function queryRegions() {
 
   function responseRegions(json) {
     queryResponseRegions = isNotEmpty(json) ? json.regions : [];
-    logResponse(startTimeMs, queryResponseRegions, 'regions');
+    logQueryResponse(startTimeMs, queryResponseRegions, 'regions');
     scheduleNextRegionQuery(performance.now() - startTimeMs);
   }
 
-  function httpErrorQueryRegions(error) {
+  function errorRegions(error) {
     console.log('HTTP error, query regions:', error);
     scheduleNextRegionQuery(performance.now() - startTimeMs);
   }
 }
 
-function logResponse(startTimeMs, response, label) {
+function logQueryResponse(startTimeMs, response, label) {
   const endTimeMs = performance.now();
   const elapsedMs = endTimeMs - startTimeMs;
   console.log(`${new Date().toISOString()} ${elapsedMs.toFixed(0)}ms - ${response.length} ${label}`);
+}
+
+function scheduleNextRegionGet() {
+  setTimeout(getWorldWideDeviceCounts, 1000);
+}
+
+function getWorldWideDeviceCounts() {
+  const startTimeMs = performance.now();
+  const regionId = '1_90.0000000000000_0.0000000000000_-90.0000000000000_180.0000000000000';
+  const path = urlPrefix + `/region/${regionId}`;
+  httpGet(path, 'json', responseWorldWideDeviceCount, errorWorldWideDeviceCount);
+
+  function isNotEmpty(json) {
+    return json && json.region && json.region.deviceCount;
+  }
+
+  function responseWorldWideDeviceCount(json) {
+    worldWideDeviceCounts = isNotEmpty(json) //
+      ? { devices: json.region.deviceCount, alarms: json.region.deviceAlarmCount }
+      : { devices: 0, alarms: 0 };
+    scheduleNextRegionGet();
+    logGet(startTimeMs);
+  }
+
+  function errorWorldWideDeviceCount(error) {
+    console.error('HTTP error, query world wide device count:', error);
+    scheduleNextRegionGet();
+  }
+
+  function logGet(startTimeMs) {
+    const endTimeMs = performance.now();
+    const elapsedMs = endTimeMs - startTimeMs;
+    const counts = `${worldWideDeviceCounts.devices.toLocaleString()} devices, ${worldWideDeviceCounts.alarms.toLocaleString()} alarms`;
+    console.log(`${new Date().toISOString()} ${elapsedMs.toFixed(0)}ms - ${counts}`);
+  }
 }

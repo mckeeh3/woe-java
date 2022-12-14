@@ -52,7 +52,7 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
   public Effect<DeviceEntity.State> get(@PathVariable String deviceId) {
     log.info("DeviceId: {}\nState: {}", deviceId, currentState());
     if (currentState().isEmpty()) {
-      return effects().error("Device not created");
+      return effects().error("Device: '%s' not created".formatted(deviceId));
     }
     return effects().reply(currentState());
   }
