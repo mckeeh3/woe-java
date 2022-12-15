@@ -931,12 +931,8 @@ function drawDeviceCounts() {
     .valueColor(valueColor)
     .draw();
 
-  const inViewDevices = queryResponseRegions.reduce((acc, region) => {
-    return acc + region.deviceCount;
-  }, 0);
-  const inViewAlarms = queryResponseRegions.reduce((acc, region) => {
-    return acc + region.deviceAlarmCount || 0;
-  }, 0);
+  const inViewDevices = queryResponseRegions.reduce((acc, region) => acc + region.deviceCount, 0);
+  const inViewAlarms = queryResponseRegions.reduce((acc, region) => acc + region.deviceAlarmCount || 0, 0);
 
   label() //
     .x(grid.ticksHorizontal - 20.13)
