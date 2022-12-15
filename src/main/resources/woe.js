@@ -763,6 +763,7 @@ function drawMapOverlay() {
   drawGenerators();
   drawMouseLocation();
   drawZoomAndMouseLocation();
+  drawDeviceCounts();
   rateGraph.draw();
 }
 
@@ -897,6 +898,73 @@ function drawZoomAndMouseLocation() {
     .draw();
 }
 
+function drawDeviceCounts() {
+  const h = 1.2;
+  const border = 0.2;
+  const keyColor = color(255, 255, 0);
+  const valueColor = color(255, 255, 255);
+  const bgColor = color(0, 0, 75, 125);
+
+  label() //
+    .x(grid.ticksHorizontal - 20.13)
+    .y(0.1)
+    .w(12)
+    .h(h)
+    .key('World wide devices')
+    .value(worldWideDeviceCounts.devices.toLocaleString())
+    .border(border)
+    .bgColor(bgColor)
+    .keyColor(keyColor)
+    .valueColor(valueColor)
+    .draw();
+
+  label() //
+    .x(grid.ticksHorizontal - 8)
+    .y(0.1)
+    .w(7)
+    .h(h)
+    .key('Alarms')
+    .value(worldWideDeviceCounts.alarms.toLocaleString())
+    .border(border)
+    .bgColor(bgColor)
+    .keyColor(keyColor)
+    .valueColor(valueColor)
+    .draw();
+
+  const inViewDevices = queryResponseRegions.reduce((acc, region) => {
+    return acc + region.deviceCount;
+  }, 0);
+  const inViewAlarms = queryResponseRegions.reduce((acc, region) => {
+    return acc + region.deviceAlarmCount || 0;
+  }, 0);
+
+  label() //
+    .x(grid.ticksHorizontal - 20.13)
+    .y(1.4)
+    .w(12)
+    .h(h)
+    .key('In view devices')
+    .value(inViewDevices.toLocaleString())
+    .border(border)
+    .bgColor(bgColor)
+    .keyColor(keyColor)
+    .valueColor(valueColor)
+    .draw();
+
+  label() //
+    .x(grid.ticksHorizontal - 8)
+    .y(1.4)
+    .w(7)
+    .h(h)
+    .key('Alarms')
+    .value(inViewAlarms.toLocaleString())
+    .border(border)
+    .bgColor(bgColor)
+    .keyColor(keyColor)
+    .valueColor(valueColor)
+    .draw();
+}
+
 function drawLatLngGrid() {
   stroke(125);
   strokeWeight(0.5);
@@ -913,54 +981,6 @@ function drawMouseGridLocation() {
   const region = findRegionUnderMouse();
   if (region) {
     drawRegion(region);
-  }
-
-  function mouseGridLocation() {
-    const indexes = mouseGridIndexes();
-
-    if (indexes.latIndex >= 0 && indexes.lngIndex >= 0) {
-      return {
-        inGrid: true,
-        rect: {
-          x: gridLngLines[indexes.lngIndex].x,
-          w: gridLngLines[indexes.lngIndex + 1].x - gridLngLines[indexes.lngIndex].x,
-          y: gridLatLines[indexes.latIndex].y,
-          h: gridLatLines[indexes.latIndex + 1].y - gridLatLines[indexes.latIndex].y,
-        },
-        map: {
-          topLeft: {
-            lat: gridLatLines[indexes.latIndex].lat,
-            lng: gridLngLines[indexes.lngIndex].lng,
-          },
-          botRight: {
-            lat: gridLatLines[indexes.latIndex + 1].lat,
-            lng: gridLngLines[indexes.lngIndex + 1].lng,
-          },
-        },
-      };
-    } else {
-      return {
-        inGrid: false,
-      };
-    }
-  }
-
-  function mouseGridIndexes() {
-    const latLngMouse = worldMap.pixelToLatLng(mouseX, mouseY);
-    const latIndex = gridLatLines.findIndex((line, index) => indexOk(index, gridLatLines.length) && isMouseBetweenLatLines(index));
-    const lngIndex = gridLngLines.findIndex((line, index) => indexOk(index, gridLngLines.length) && isMouseBetweenLngLines(index));
-
-    return { latIndex: latIndex, lngIndex: lngIndex };
-
-    function indexOk(index, length) {
-      return index >= 0 && index < length - 1;
-    }
-    function isMouseBetweenLatLines(index) {
-      return gridLatLines[index].lat > latLngMouse.lat && gridLatLines[index + 1].lat < latLngMouse.lat;
-    }
-    function isMouseBetweenLngLines(index) {
-      return gridLngLines[index].lng < latLngMouse.lng && gridLngLines[index + 1].lng > latLngMouse.lng;
-    }
   }
 
   function findRegionUnderMouse() {
