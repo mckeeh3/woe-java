@@ -761,6 +761,7 @@ function drawMapOverlay() {
   drawDevices();
   drawCrossHairs();
   drawGenerators();
+  drawMouseLocation();
   drawZoomAndMouseLocation();
   rateGraph.draw();
 }
@@ -902,6 +903,135 @@ function drawLatLngGrid() {
 
   gridLatLines.forEach((latLine) => line(0, latLine.y, windowWidth - 1, latLine.y));
   gridLngLines.forEach((lngLine) => line(lngLine.x, 0, lngLine.x, windowHeight - 1));
+}
+
+function drawMouseLocation() {
+  drawMouseGridLocation();
+}
+
+function drawMouseGridLocation() {
+  const region = findRegionUnderMouse();
+  if (region) {
+    drawRegion(region);
+  }
+
+  function mouseGridLocation() {
+    const indexes = mouseGridIndexes();
+
+    if (indexes.latIndex >= 0 && indexes.lngIndex >= 0) {
+      return {
+        inGrid: true,
+        rect: {
+          x: gridLngLines[indexes.lngIndex].x,
+          w: gridLngLines[indexes.lngIndex + 1].x - gridLngLines[indexes.lngIndex].x,
+          y: gridLatLines[indexes.latIndex].y,
+          h: gridLatLines[indexes.latIndex + 1].y - gridLatLines[indexes.latIndex].y,
+        },
+        map: {
+          topLeft: {
+            lat: gridLatLines[indexes.latIndex].lat,
+            lng: gridLngLines[indexes.lngIndex].lng,
+          },
+          botRight: {
+            lat: gridLatLines[indexes.latIndex + 1].lat,
+            lng: gridLngLines[indexes.lngIndex + 1].lng,
+          },
+        },
+      };
+    } else {
+      return {
+        inGrid: false,
+      };
+    }
+  }
+
+  function mouseGridIndexes() {
+    const latLngMouse = worldMap.pixelToLatLng(mouseX, mouseY);
+    const latIndex = gridLatLines.findIndex((line, index) => indexOk(index, gridLatLines.length) && isMouseBetweenLatLines(index));
+    const lngIndex = gridLngLines.findIndex((line, index) => indexOk(index, gridLngLines.length) && isMouseBetweenLngLines(index));
+
+    return { latIndex: latIndex, lngIndex: lngIndex };
+
+    function indexOk(index, length) {
+      return index >= 0 && index < length - 1;
+    }
+    function isMouseBetweenLatLines(index) {
+      return gridLatLines[index].lat > latLngMouse.lat && gridLatLines[index + 1].lat < latLngMouse.lat;
+    }
+    function isMouseBetweenLngLines(index) {
+      return gridLngLines[index].lng < latLngMouse.lng && gridLngLines[index + 1].lng > latLngMouse.lng;
+    }
+  }
+
+  function findRegionUnderMouse() {
+    const mouseLatLng = worldMap.pixelToLatLng(mouseX, mouseY);
+    const region = queryResponseRegions.find((r) => {
+      const topLeftLat = r.region.topLeft.lat || 0.0;
+      const topLeftLng = r.region.topLeft.lng || 0.0;
+      const botRightLat = r.region.botRight.lat || 0.0;
+      const botRightLng = r.region.botRight.lng || 0.0;
+      return (
+        topLeftLat > mouseLatLng.lat && //
+        topLeftLng < mouseLatLng.lng &&
+        botRightLat < mouseLatLng.lat &&
+        botRightLng > mouseLatLng.lng
+      );
+    });
+    return region;
+  }
+
+  function drawRegion(region) {
+    const deviceCounts = { devices: region.region.deviceCount || 0.0, alarms: region.region.alarmCount || 0.0 };
+    const topLeft = { lat: region.region.topLeft.lat || 0.0, lng: region.region.topLeft.lng || 0.0 };
+    const botRight = { lat: region.region.botRight.lat || 0.0, lng: region.region.botRight.lng || 0.0 };
+    const topLeftXY = worldMap.latLngToPixel(topLeft);
+    const botRightXY = worldMap.latLngToPixel(botRight);
+    const x = grid.toGridX(topLeftXY.x);
+    const yDevices = grid.toGridY(topLeftXY.y) + 0.1;
+    const yAlarms = grid.toGridY(botRightXY.y) - 1.1;
+    const w = grid.toGridLength(botRightXY.x - topLeftXY.x);
+    const h = 1;
+
+    const border = 0.1;
+    const bgColorDevices = color(255, 251, 51, 100);
+    const bgColorAlarms = color(255, 51, 51, 100);
+    const keyColor = color(28, 98, 0);
+    const valueColor = color(28, 98, 0);
+
+    if (deviceCounts.devices > 0) {
+      label() //
+        .x(x)
+        .y(yDevices)
+        .w(w)
+        .h(h)
+        .key('Devices')
+        .value(deviceCounts.devices.toLocaleString())
+        .border(border)
+        .bgColor(bgColorDevices)
+        .keyColor(keyColor)
+        .valueColor(valueColor)
+        .draw();
+    }
+    if (deviceCounts.alarms >= 0) {
+      label() //
+        .x(x)
+        .y(yAlarms)
+        .w(w)
+        .h(h)
+        .key('Alarms')
+        .value(deviceCounts.alarms.toLocaleString())
+        .border(border)
+        .bgColor(bgColorAlarms)
+        .keyColor(keyColor)
+        .valueColor(valueColor)
+        .draw();
+    }
+
+    stroke(255, 251, 51);
+    strokeWeight(2);
+    noFill();
+    rect(topLeftXY.x, topLeftXY.y, botRightXY.x - topLeftXY.x, botRightXY.y - topLeftXY.y);
+  }
 }
 
 function mouseClicked(event) {
@@ -1046,7 +1176,6 @@ function errorCreateGenerator(error) {
 
 function scheduleNextDeviceQuery(lastQueryDurationMs) {
   const timeout = max(1, devicesQueryIntervalMs - lastQueryDurationMs);
-  console.log(`schedule next device query in ${timeout}ms`);
   setTimeout(queryDevices, timeout);
 }
 
@@ -1088,7 +1217,8 @@ function queryDevices() {
       }
     } else {
       queryResponseDevices = [];
-      scheduleNextDeviceQuery(0);
+      logQueryResponse(startTimeMs, queryResponseDevices, 'devices');
+      scheduleNextDeviceQuery(performance.now() - startTimeMs);
     }
   }
 
@@ -1197,7 +1327,7 @@ function queryRegions() {
 function logQueryResponse(startTimeMs, response, label) {
   const endTimeMs = performance.now();
   const elapsedMs = endTimeMs - startTimeMs;
-  console.log(`${new Date().toISOString()} ${elapsedMs.toFixed(0)}ms - ${response.length} ${label}`);
+  console.log(`${new Date().toISOString()} ${elapsedMs.toFixed(0)}ms - ${response.length.toLocaleString()} ${label}`);
 }
 
 function scheduleNextRegionGet() {
@@ -1206,7 +1336,7 @@ function scheduleNextRegionGet() {
 
 function getWorldWideDeviceCounts() {
   const startTimeMs = performance.now();
-  const regionId = '1_90.0000000000000_0.0000000000000_-90.0000000000000_180.0000000000000';
+  const regionId = '0_90.0000000000000_-180.0000000000000_-90.0000000000000_180.0000000000000';
   const path = urlPrefix + `/region/${regionId}`;
   httpGet(path, 'json', responseWorldWideDeviceCount, errorWorldWideDeviceCount);
 

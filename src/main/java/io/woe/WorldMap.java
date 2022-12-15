@@ -19,7 +19,7 @@ interface WorldMap {
 
   static Region regionAbove(Region subRegion) {
     var zoomAbove = subRegion.zoom() - 1;
-    if (zoomAbove == 0) {
+    if (zoomAbove < 0) {
       return null;
     }
 
@@ -30,12 +30,12 @@ interface WorldMap {
     return region(0, topLeft(90, -180), botRight(-90, 180));
   }
 
-  // level 0 - 1 region 180 / 360
-  // level 1 - 2 regions 180 / 1 x 180 / 2, 180 lat x 180 lng, on either side of lng 0 meridian
-  // level 2 - 9 regions 180 / 3 x 180 / 3, 60 lat x 60 lng
-  // level 3 - 9 regions 60 / 3 x 60 / 3, 20 lat x 20 lng
-  // level 4 - 4 regions 20 / 2 x 20 / 2, 10 lat x 10 lng
-  // level 5 - 4 regions 10 / 2 x 10 / 2, 5 lat x 5 lng, subdivide by 4 down to zoom 18
+  // zoom 0 - 1 region 180 / 360
+  // zoom 1 - 2 regions 180 / 1 x 180 / 2, 180 lat x 180 lng, on either side of lng 0 meridian
+  // zoom 2 - 9 regions 180 / 3 x 180 / 3, 60 lat x 60 lng
+  // zoom 3 - 9 regions 60 / 3 x 60 / 3, 20 lat x 20 lng
+  // zoom 4 - 4 regions 20 / 2 x 20 / 2, 10 lat x 10 lng
+  // zoom 5 - 4 regions 10 / 2 x 10 / 2, 5 lat x 5 lng, subdivide by 4 down to zoom 18
   //
   static List<Region> subRegionsFor(Region region) {
     switch (region.zoom) {

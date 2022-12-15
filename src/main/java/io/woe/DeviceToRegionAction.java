@@ -17,7 +17,7 @@ public class DeviceToRegionAction extends Action {
 
   public Effect<String> on(DeviceEntity.DeviceCreatedEvent event) {
     log.info("Event: {}", event);
-    var subRegion = new Region(zoomMax, event.position(), event.position(), 1, 0);
+    var subRegion = new Region(zoomMax + 1, event.position(), event.position(), 1, 0);
     var region = regionAbove(subRegion);
     var regionId = regionIdFor(region);
     var path = "/region/%s/update-sub-region".formatted(regionId);

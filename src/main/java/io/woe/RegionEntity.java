@@ -31,8 +31,8 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
 
   @PutMapping("/{regionId}/update-sub-region")
   public Effect<String> updateSubRegion(@RequestBody UpdateSubRegionCommand command) {
-    if (command.subRegion().zoom() == 1) {
-      return effects().error("Cannot add sub-region with zoom level 1");
+    if (command.subRegion().zoom() < 1) {
+      return effects().error("Cannot add sub-region with zoom < 1, zoom: %d".formatted(command.subRegion().zoom()));
     }
     log.info("State: {}\nCommand: {}", currentState(), command);
     return effects()
@@ -50,7 +50,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
 
   @GetMapping("/{regionId}")
   public Effect<RegionEntity.State> get(@PathVariable String regionId) {
-    log.info("RegionId: {}\nState: {}", regionId, currentState());
+    log.debug("RegionId: {}\nState: {}", regionId, currentState());
     if (currentState().isEmpty()) {
       return effects().error("Region: '%s', not created".formatted(regionId));
     }
