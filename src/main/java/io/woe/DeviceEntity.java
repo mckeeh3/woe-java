@@ -34,7 +34,7 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
 
   @PostMapping("/{deviceId}/create")
   public Effect<String> create(@RequestBody CreateDeviceCommand command) {
-    log.info("State: {}\nCommand: {}", currentState(), command);
+    log.debug("EntityId: {}\nState: {}\nCommand: {}", currentState(), command);
     return effects()
         .emitEvent(currentState().eventFor(command))
         .thenReply(__ -> "OK");
@@ -42,7 +42,7 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
 
   @PutMapping("/{deviceId}/ping")
   public Effect<String> ping(@RequestBody PingCommand command) {
-    log.info("State: {}\nCommand: {}", currentState(), command);
+    log.info("EntityId: {}\nState: {}\nCommand: {}", currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -50,7 +50,7 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
 
   @GetMapping("/{deviceId}")
   public Effect<DeviceEntity.State> get(@PathVariable String deviceId) {
-    log.info("DeviceId: {}\nState: {}", deviceId, currentState());
+    log.info("EntityId: {}\nDeviceId: {}\nState: {}", deviceId, currentState());
     if (currentState().isEmpty()) {
       return effects().error("Device: '%s' not created".formatted(deviceId));
     }

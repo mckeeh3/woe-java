@@ -34,7 +34,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
     if (command.subRegion().zoom() < 1) {
       return effects().error("Cannot add sub-region with zoom < 1, zoom: %d".formatted(command.subRegion().zoom()));
     }
-    log.info("State: {}\nCommand: {}", currentState(), command);
+    log.info("EntityId: {}\nState: {}\nCommand: {}", commandContext().entityId(), currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -42,7 +42,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
 
   @PutMapping("/{regionId}/release-current-state")
   public Effect<String> releaseCurrentState(@RequestBody ReleaseCurrentStateCommand command) {
-    log.info("State: {}\nCommand: {}", currentState(), command);
+    log.info("EntityId: {}\nState: {}\nCommand: {}", commandContext().entityId(), currentState(), command);
     return effects()
         .emitEvent(currentState().eventFor(command))
         .thenReply(__ -> "OK");
@@ -50,7 +50,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
 
   @GetMapping("/{regionId}")
   public Effect<RegionEntity.State> get(@PathVariable String regionId) {
-    log.debug("RegionId: {}\nState: {}", regionId, currentState());
+    log.debug("EntityId: {}\nRegionId: {}\nState: {}", commandContext().entityId(), regionId, currentState());
     if (currentState().isEmpty()) {
       return effects().error("Region: '%s', not created".formatted(regionId));
     }

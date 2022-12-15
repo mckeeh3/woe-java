@@ -115,6 +115,10 @@ interface WorldMap {
       return from(0, 0, 0, 0, 0);
     }
 
+    boolean isEmpty() {
+      return zoom == 0 && topLeft.lat == 0 && topLeft.lng == 0 && botRight.lat == 0 && botRight.lng == 0;
+    }
+
     static Region from(int zoom, LatLng topLeft, LatLng botRight) {
       return new Region(zoom, topLeft, botRight, 0, 0);
     }
@@ -131,10 +135,6 @@ interface WorldMap {
 
     Region updateCounts(int deviceCount, int deviceAlarmCount) {
       return new Region(zoom, topLeft, botRight, deviceCount, deviceAlarmCount);
-    }
-
-    boolean isEmpty() {
-      return zoom == 0;
     }
 
     boolean contains(LatLng latLng) {
