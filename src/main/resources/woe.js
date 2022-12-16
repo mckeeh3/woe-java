@@ -904,11 +904,12 @@ function drawDeviceCounts() {
   const keyColor = color(255, 255, 0);
   const valueColor = color(255, 255, 255);
   const bgColor = color(0, 0, 75, 125);
+  const bgColorAlarms = color(255, 0, 0, 150);
 
   label() //
-    .x(grid.ticksHorizontal - 20.13)
+    .x(grid.ticksHorizontal - 21.13)
     .y(0.1)
-    .w(12)
+    .w(13)
     .h(h)
     .key('World wide devices')
     .value(worldWideDeviceCounts.devices.toLocaleString())
@@ -926,7 +927,7 @@ function drawDeviceCounts() {
     .key('Alarms')
     .value(worldWideDeviceCounts.alarms.toLocaleString())
     .border(border)
-    .bgColor(bgColor)
+    .bgColor(bgColorAlarms)
     .keyColor(keyColor)
     .valueColor(valueColor)
     .draw();
@@ -935,9 +936,9 @@ function drawDeviceCounts() {
   const inViewAlarms = queryResponseRegions.reduce((acc, region) => acc + region.deviceAlarmCount || 0, 0);
 
   label() //
-    .x(grid.ticksHorizontal - 20.13)
+    .x(grid.ticksHorizontal - 21.13)
     .y(1.4)
-    .w(12)
+    .w(13)
     .h(h)
     .key('In view devices')
     .value(inViewDevices.toLocaleString())
@@ -952,10 +953,10 @@ function drawDeviceCounts() {
     .y(1.4)
     .w(7)
     .h(h)
-    .key('Alarms')
+    .key('')
     .value(inViewAlarms.toLocaleString())
     .border(border)
-    .bgColor(bgColor)
+    .bgColor(bgColorAlarms)
     .keyColor(keyColor)
     .valueColor(valueColor)
     .draw();

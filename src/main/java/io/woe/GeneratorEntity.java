@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
+import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import kalix.springsdk.annotations.EntityKey;
 import kalix.springsdk.annotations.EntityType;
 import kalix.springsdk.annotations.EventHandler;
@@ -28,6 +29,11 @@ import static io.woe.WorldMap.*;
 public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
   private static final Logger log = LoggerFactory.getLogger(GeneratorEntity.class);
   private static final Random random = new Random();
+  private final String entityId;
+
+  public GeneratorEntity(EventSourcedEntityContext context) {
+    entityId = context.entityId();
+  }
 
   static int devicesPerGeneratorBatch = 32;
 
@@ -38,7 +44,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
 
   @PostMapping("/{generatorId}/create")
   public Effect<String> create(@RequestBody CreateGeneratorCommand command) {
-    log.info("EntityId: {}\nState: {}\nCommand: {}", commandContext().entityId(), currentState(), command);
+    log.info("EntityId: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -46,7 +52,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
 
   @PutMapping("/{generatorId}/generate")
   public Effect<String> generate(@RequestBody GenerateCommand command) {
-    log.info("EntityId: {}\nState: {}\nCommand: {}", commandContext().entityId(), currentState(), command);
+    log.info("EntityId: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -54,7 +60,7 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
 
   @GetMapping("/{generatorId}")
   public Effect<GeneratorEntity.State> get(@PathVariable String generatorId) {
-    log.info("EntityId: {}\nGeneratorId: {}\nState: {}", commandContext().entityId(), generatorId, currentState());
+    log.info("EntityId: {}\nGeneratorId: {}\nState: {}", entityId, generatorId, currentState());
     if (currentState().isEmpty()) {
       return effects().error("Generator: '%s', not created".formatted(generatorId));
     }
@@ -211,7 +217,8 @@ public class GeneratorEntity extends EventSourcedEntity<GeneratorEntity.State> {
       final var lng2 = lng + Math.atan2(Math.sin(angle) * Math.sin(distance / earthRadiusKm) * Math.cos(lat),
           Math.cos(distance / earthRadiusKm) - Math.sin(lat) * Math.sin(lat2));
       var devicePosition = LatLng.fromRadians(lat2, lng2);
-      var deviceId = "device-id_%1.13f_%1.13f".formatted(devicePosition.lat(), devicePosition.lng());
+      // var deviceId = "device-id_%1.13f_%1.13f".formatted(devicePosition.lat(), devicePosition.lng());
+      var deviceId = DeviceEntity.deviceIdFor(position);
       return new Device(deviceId, generatorId, devicePosition);
     }
   }

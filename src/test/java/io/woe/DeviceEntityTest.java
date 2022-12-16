@@ -61,17 +61,14 @@ public class DeviceEntityTest {
     }
 
     {
-      var command = new DeviceEntity.PingCommand(command1.deviceId());
-      var result = testKit.call(e -> e.ping(command));
+      var deviceId = "device-1";
+      var result = testKit.call(e -> e.ping(deviceId));
       assertFalse(result.isError());
 
       var events = result.getAllEvents();
       if (events.size() > 0) {
         var event = events.get(0);
-        if (event instanceof DeviceEntity.PingedEvent) {
-          var pingedEvent = (DeviceEntity.PingedEvent) event;
-          assertEquals(command1.deviceId(), pingedEvent.deviceId());
-        } else if (event instanceof DeviceEntity.AlarmChangedEvent) {
+        if (event instanceof DeviceEntity.AlarmChangedEvent) {
           var deviceNotFoundEvent = (DeviceEntity.AlarmChangedEvent) event;
           assertEquals(command1.deviceId(), deviceNotFoundEvent.deviceId());
         }

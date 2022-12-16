@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
+import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import kalix.springsdk.annotations.EntityKey;
 import kalix.springsdk.annotations.EntityType;
 import kalix.springsdk.annotations.EventHandler;
@@ -26,6 +27,11 @@ import kalix.springsdk.annotations.EventHandler;
 public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
   private static final Logger log = LoggerFactory.getLogger(DeviceEntity.class);
   private static final Random random = new Random();
+  private final String entityId;
+
+  public DeviceEntity(EventSourcedEntityContext context) {
+    entityId = context.entityId();
+  }
 
   @Override
   public State emptyState() {
@@ -34,23 +40,23 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
 
   @PostMapping("/{deviceId}/create")
   public Effect<String> create(@RequestBody CreateDeviceCommand command) {
-    log.debug("EntityId: {}\nState: {}\nCommand: {}", currentState(), command);
+    log.debug("EntityId: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
     return effects()
         .emitEvent(currentState().eventFor(command))
         .thenReply(__ -> "OK");
   }
 
   @PutMapping("/{deviceId}/ping")
-  public Effect<String> ping(@RequestBody PingCommand command) {
-    log.info("EntityId: {}\nState: {}\nCommand: {}", currentState(), command);
+  public Effect<String> ping(@PathVariable String deviceId) {
+    log.debug("EntityId: {}\nState: {}", entityId, currentState());
     return effects()
-        .emitEvents(currentState().eventsFor(command))
+        .emitEvents(currentState().eventsFor(deviceId))
         .thenReply(__ -> "OK");
   }
 
   @GetMapping("/{deviceId}")
   public Effect<DeviceEntity.State> get(@PathVariable String deviceId) {
-    log.info("EntityId: {}\nDeviceId: {}\nState: {}", deviceId, currentState());
+    log.info("EntityId: {}\nDeviceId: {}\nState: {}", entityId, deviceId, currentState());
     if (currentState().isEmpty()) {
       return effects().error("Device: '%s' not created".formatted(deviceId));
     }
@@ -59,12 +65,6 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
 
   @EventHandler
   public State on(DeviceCreatedEvent event) {
-    log.info("State: {}\nEvent: {}", currentState(), event);
-    return currentState().on(event);
-  }
-
-  @EventHandler
-  public State on(PingedEvent event) {
     log.info("State: {}\nEvent: {}", currentState(), event);
     return currentState().on(event);
   }
@@ -89,11 +89,11 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
       return new DeviceCreatedEvent(command.deviceId, command.position);
     }
 
-    List<?> eventsFor(PingCommand command) {
+    List<?> eventsFor(String deviceId) {
       if (alarmOn && random.nextDouble() * 100 > 95) {
-        return List.of(new AlarmChangedEvent(command.deviceId, true, Instant.now()));
-      } else if (!alarmOn && random.nextDouble() * 1_000 > 999) {
-        return List.of(new AlarmChangedEvent(command.deviceId, false, Instant.now()));
+        return List.of(new AlarmChangedEvent(deviceId, true, Instant.now()));
+      } else if (!alarmOn && random.nextDouble() * 1_000 > 995) {
+        return List.of(new AlarmChangedEvent(deviceId, false, Instant.now()));
       }
       return List.of();
     }
@@ -105,23 +105,18 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
       return new State(event.deviceId, event.position, Instant.ofEpochSecond(0), alarmOn, Instant.now());
     }
 
-    State on(PingedEvent event) {
-      var lastPinged = Instant.now();
-      return new State(deviceId, position, lastPinged, alarmOn, alarmLastTriggered);
-    }
-
     State on(AlarmChangedEvent event) {
       return new State(deviceId, position, Instant.now(), event.alarmOn, event.alarmLastTriggered);
     }
   }
 
+  static String deviceIdFor(LatLng position) {
+    return "device-id_%1.13f_%1.13f".formatted(position.lat(), position.lng());
+  }
+
   public record CreateDeviceCommand(String deviceId, LatLng position) {}
 
-  public record PingCommand(String deviceId) {}
-
   public record DeviceCreatedEvent(String deviceId, LatLng position) {}
-
-  public record PingedEvent(String deviceId) {}
 
   public record AlarmChangedEvent(String deviceId, boolean alarmOn, Instant alarmLastTriggered) {}
 }

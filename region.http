@@ -1,8 +1,10 @@
 @urlPrefix = https://green-voice-3640.us-east1.kalix.app
 @regionId = 0_90.0000000000000_-180.0000000000000_-90.0000000000000_180.0000000000000
+# @regionId = 1_90.0000000000000_-180.0000000000000_-90.0000000000000_0.0000000000000
+# @regionId = 18_-34.1235351562500_18.5449218750000_-34.1241455078125_18.5455322265625
 
 # Covers the whole world
-@zoom = 0
+@zoom = 18
 @topLeftLat = 90.0
 @topLeftLng = -180.0
 @botRightLat = -90.0
@@ -15,9 +17,15 @@
 # @botRightLng = 10.10
 
 ### jshell - "%d_%1.13f_%1.13f_%1.13f_%1.13f".formatted(0, 90.0, -180.0, -90.0, 180.0)
+### jshell - "%d_%1.13f_%1.13f_%1.13f_%1.13f".formatted(1, 90.0, -180.0, -90.0, 0.0)
+### jshell - "%d_%1.13f_%1.13f_%1.13f_%1.13f".formatted(18, -34.12353515625, 18.544921875, -34.1241455078125, 18.5455322265625)
 
 GET {{urlPrefix}}/region/{{regionId}}
 
 ###
 
 GET {{urlPrefix}}/regions/by-location/{{zoom}}/{{topLeftLat}}/{{topLeftLng}}/{{botRightLat}}/{{botRightLng}}
+
+###
+
+POST {{urlPrefix}}/region-ping/{{regionId}}/create-timer

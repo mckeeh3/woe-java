@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
+import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import kalix.springsdk.annotations.EntityKey;
 import kalix.springsdk.annotations.EntityType;
 import kalix.springsdk.annotations.EventHandler;
@@ -23,6 +24,11 @@ import kalix.springsdk.annotations.EventHandler;
 @RequestMapping("/region")
 public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
   private static final Logger log = LoggerFactory.getLogger(RegionEntity.class);
+  private final String entityId;
+
+  public RegionEntity(EventSourcedEntityContext context) {
+    entityId = context.entityId();
+  }
 
   @Override
   public State emptyState() {
@@ -34,7 +40,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
     if (command.subRegion().zoom() < 1) {
       return effects().error("Cannot add sub-region with zoom < 1, zoom: %d".formatted(command.subRegion().zoom()));
     }
-    log.info("EntityId: {}\nState: {}\nCommand: {}", commandContext().entityId(), currentState(), command);
+    log.info("EntityId: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
     return effects()
         .emitEvents(currentState().eventsFor(command))
         .thenReply(__ -> "OK");
@@ -42,7 +48,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
 
   @PutMapping("/{regionId}/release-current-state")
   public Effect<String> releaseCurrentState(@RequestBody ReleaseCurrentStateCommand command) {
-    log.info("EntityId: {}\nState: {}\nCommand: {}", commandContext().entityId(), currentState(), command);
+    log.info("EntityId: {}\nState: {}\nCommand: {}", entityId, currentState(), command);
     return effects()
         .emitEvent(currentState().eventFor(command))
         .thenReply(__ -> "OK");
@@ -50,7 +56,7 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
 
   @GetMapping("/{regionId}")
   public Effect<RegionEntity.State> get(@PathVariable String regionId) {
-    log.debug("EntityId: {}\nRegionId: {}\nState: {}", commandContext().entityId(), regionId, currentState());
+    log.debug("EntityId: {}\nRegionId: {}\nState: {}", entityId, regionId, currentState());
     if (currentState().isEmpty()) {
       return effects().error("Region: '%s', not created".formatted(regionId));
     }
