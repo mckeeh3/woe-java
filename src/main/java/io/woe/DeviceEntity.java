@@ -54,6 +54,14 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
         .thenReply(__ -> "OK");
   }
 
+  @PutMapping("/{deviceId}/toggle-alarm") // TODO temporary for testing
+  public Effect<String> alarm(@PathVariable String deviceId) {
+    log.debug("EntityId: {}\nState: {}", entityId, currentState());
+    return effects()
+        .emitEvent(new AlarmChangedEvent(deviceId, currentState().position, !currentState().alarmOn, Instant.now()))
+        .thenReply(__ -> "OK");
+  }
+
   @GetMapping("/{deviceId}")
   public Effect<DeviceEntity.State> get(@PathVariable String deviceId) {
     log.info("EntityId: {}\nDeviceId: {}\nState: {}", entityId, deviceId, currentState());
@@ -91,9 +99,9 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
 
     List<?> eventsFor(String deviceId) {
       if (alarmOn && random.nextDouble() * 100 > 95) {
-        return List.of(new AlarmChangedEvent(deviceId, true, Instant.now()));
+        return List.of(new AlarmChangedEvent(deviceId, position, true, Instant.now()));
       } else if (!alarmOn && random.nextDouble() * 1_000 > 995) {
-        return List.of(new AlarmChangedEvent(deviceId, false, Instant.now()));
+        return List.of(new AlarmChangedEvent(deviceId, position, false, Instant.now()));
       }
       return List.of();
     }
@@ -118,5 +126,5 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
 
   public record DeviceCreatedEvent(String deviceId, LatLng position) {}
 
-  public record AlarmChangedEvent(String deviceId, boolean alarmOn, Instant alarmLastTriggered) {}
+  public record AlarmChangedEvent(String deviceId, LatLng position, boolean alarmOn, Instant alarmLastTriggered) {}
 }

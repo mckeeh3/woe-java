@@ -15,7 +15,7 @@ import kalix.springsdk.annotations.Subscribe;
 import kalix.springsdk.annotations.Table;
 import kalix.springsdk.annotations.ViewId;
 
-@ViewId("devices-by-location-v2")
+@ViewId("devices-by-location-v1")
 @Table("devices_by_location")
 @Subscribe.EventSourcedEntity(value = DeviceEntity.class, ignoreUnknown = true)
 public class DevicesByLocationView extends View<DevicesByLocationView.DeviceViewRow> {

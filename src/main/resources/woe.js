@@ -758,6 +758,7 @@ const rateGraph = new RateGraph();
 // Order is important here
 function drawMapOverlay() {
   drawLatLngGrid();
+  drawRegions();
   drawDevices();
   drawCrossHairs();
   drawGenerators();
@@ -838,13 +839,26 @@ function drawGenerators() {
   });
 }
 
+function drawRegions() {
+  stroke(0, 200, 200);
+  strokeWeight(0.25);
+  queryResponseRegions.forEach((region) => {
+    const topLeft = { lat: region.region.topLeft.lat || 0.0, lng: region.region.topLeft.lng || 0.0 };
+    const botRight = { lat: region.region.botRight.lat || 0.0, lng: region.region.botRight.lng || 0.0 };
+    const topLeftXY = worldMap.latLngToPixel(topLeft);
+    const botRightXY = worldMap.latLngToPixel(botRight);
+    fill(region.deviceAlarmCount && region.deviceAlarmCount > 0 ? [200, 0, 0, 50] : [0, 200, 200, 50]);
+    rect(topLeftXY.x, topLeftXY.y, botRightXY.x - topLeftXY.x, botRightXY.y - topLeftXY.y);
+  });
+}
+
 function drawDevices() {
   const zoom = worldMap.zoom();
   const weight = map(zoom, 1, 18, 0, 12);
-  stroke([70, 110, 230]);
   strokeWeight(weight);
   queryResponseDevices.forEach((device) => {
     const deviceXY = worldMap.latLngToPixel(device.position.lat, device.position.lng);
+    stroke(device.alarmOn ? [230, 0, 0] : [70, 110, 230]);
     point(deviceXY.x, deviceXY.y);
   });
 }
@@ -933,7 +947,7 @@ function drawDeviceCounts() {
     .draw();
 
   const inViewDevices = queryResponseRegions.reduce((acc, region) => acc + region.deviceCount, 0);
-  const inViewAlarms = queryResponseRegions.reduce((acc, region) => acc + region.deviceAlarmCount || 0, 0);
+  const inViewAlarms = queryResponseRegions.reduce((acc, region) => acc + (region.deviceAlarmCount || 0), 0);
 
   label() //
     .x(grid.ticksHorizontal - 21.13)
@@ -998,7 +1012,7 @@ function drawMouseGridLocation() {
   }
 
   function drawRegion(region) {
-    const deviceCounts = { devices: region.region.deviceCount || 0.0, alarms: region.region.alarmCount || 0.0 };
+    const deviceCounts = { devices: region.region.deviceCount || 0.0, alarms: region.region.deviceAlarmCount || 0.0 };
     const topLeft = { lat: region.region.topLeft.lat || 0.0, lng: region.region.topLeft.lng || 0.0 };
     const botRight = { lat: region.region.botRight.lat || 0.0, lng: region.region.botRight.lng || 0.0 };
     const topLeftXY = worldMap.latLngToPixel(topLeft);
