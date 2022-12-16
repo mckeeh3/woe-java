@@ -12,21 +12,31 @@ import kalix.springsdk.annotations.Subscribe;
 import kalix.springsdk.annotations.Table;
 import kalix.springsdk.annotations.ViewId;
 
-@ViewId("regions-by-location")
+@ViewId("regions-by-location-v1")
 @Table("regions_by_location")
 @Subscribe.EventSourcedEntity(value = RegionEntity.class, ignoreUnknown = true)
 public class RegionByLocationView extends View<RegionByLocationView.RegionViewRow> {
   private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RegionByLocationView.class);
+
+  // x-min = topLeft.lng
+  // x-max = botRight.lng
+  // y-min = botRight.lat
+  // y-max = topLeft.lat
+  //
+  // isOverLapping1d((y-max1, x-min1)), (y-min1, x-max1)), (y-max2, x-min2)), (y-min2, x-max2)) =
+  // __y-max1 >= y-min2 && y-min1 <= y-max2 && x-max1 >= x-min2 && x-min1 <= x-max2
+  // _____y-max1 >= y-min2_______&&______y-min1 <= y-max2_______&&_______x-max1 >= x-min2______&&_______x-min1 <= x-max2
+  // topLeft.lat >= botRight.lat && topLeft.lng <= botRight.lng && botRight.lat <= topLeft.lat && botRight.lng >= topLeft.lng
 
   @GetMapping("/regions/by-location/{zoom}/{topLeftLat}/{topLeftLng}/{botRightLat}/{botRightLng}")
   @Query("""
       SELECT * AS regions FROM regions_by_location
        LIMIT 1000
        WHERE region.zoom = :zoom
-         AND region.topLeft.lat <= :topLeftLat
-         AND region.topLeft.lng >= :topLeftLng
-         AND region.botRight.lat >= :botRightLat
-         AND region.botRight.lng <= :botRightLng
+         AND region.topLeft.lat >= :botRightLat
+         AND region.topLeft.lng <= :botRightLng
+         AND region.botRight.lat <= :topLeftLat
+         AND region.botRight.lng >= :topLeftLng
          AND deviceCount > 0
       """)
   public Regions getRegionsByLocation(@PathVariable Integer zoom, @PathVariable Double topLeftLat, @PathVariable Double topLeftLng, @PathVariable Double botRightLat, @PathVariable Double botRightLng) {
@@ -34,7 +44,7 @@ public class RegionByLocationView extends View<RegionByLocationView.RegionViewRo
   }
 
   public UpdateEffect<RegionViewRow> on(RegionEntity.CurrentStateReleasedEvent event) {
-    log.info("State: {}\nEvent: {}", viewState(), event);
+    log.debug("State: {}\nEvent: {}", viewState(), event);
     return effects().updateState(RegionViewRow.on(event));
   }
 

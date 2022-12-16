@@ -42,12 +42,12 @@ public class DevicesByLocationView extends View<DevicesByLocationView.DeviceView
   }
 
   public UpdateEffect<DeviceViewRow> on(DeviceEntity.DeviceCreatedEvent event) {
-    log.info("State: {}\nEvent: {}", viewState(), event);
+    log.debug("State: {}\nEvent: {}", viewState(), event);
     return effects().updateState(new DeviceViewRow(event.deviceId(), event.position(), false));
   }
 
   public UpdateEffect<DeviceViewRow> on(DeviceEntity.AlarmChangedEvent event) {
-    log.info("State: {}\nEvent: {}", viewState(), event);
+    log.debug("State: {}\nEvent: {}", viewState(), event);
     return effects().updateState(viewState().on(event));
   }
 

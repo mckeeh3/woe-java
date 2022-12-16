@@ -65,19 +65,19 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
 
   @EventHandler
   public State on(SubRegionUpdatedEvent event) {
-    log.info("State: {}\nEvent: {}", currentState(), event);
+    log.debug("State: {}\nEvent: {}", currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(RegionUpdatedEvent event) {
-    log.info("State: {}\nEvent: {}", currentState(), event);
+    log.debug("State: {}\nEvent: {}", currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(CurrentStateReleasedEvent event) {
-    log.info("State: {}\nEvent: {}", currentState(), event);
+    log.debug("State: {}\nEvent: {}", currentState(), event);
     return currentState().on(event);
   }
 

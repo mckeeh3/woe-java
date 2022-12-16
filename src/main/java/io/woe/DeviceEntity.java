@@ -64,7 +64,7 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
 
   @GetMapping("/{deviceId}")
   public Effect<DeviceEntity.State> get(@PathVariable String deviceId) {
-    log.info("EntityId: {}\nDeviceId: {}\nState: {}", entityId, deviceId, currentState());
+    log.debug("EntityId: {}\nDeviceId: {}\nState: {}", entityId, deviceId, currentState());
     if (currentState().isEmpty()) {
       return effects().error("Device: '%s' not created".formatted(deviceId));
     }
@@ -73,13 +73,13 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
 
   @EventHandler
   public State on(DeviceCreatedEvent event) {
-    log.info("State: {}\nEvent: {}", currentState(), event);
+    log.debug("State: {}\nEvent: {}", currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
   public State on(AlarmChangedEvent event) {
-    log.info("State: {}\nEvent: {}", currentState(), event);
+    log.debug("State: {}\nEvent: {}", currentState(), event);
     return currentState().on(event);
   }
 
