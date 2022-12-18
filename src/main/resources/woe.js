@@ -216,11 +216,11 @@ class Generator {
     this.ratePerSecond = 0;
     this.rateAngle = 0.0;
     this.deviceCountLimit = 0;
+    this.deviceCountLimitMin = 0;
+    this.deviceCountLimitMax = 0;
     this.deviceCountCurrent = 0;
     this.deviceCountAngle = 0.0;
-    this.generated = 0; // TODO: remove when integrated with backend service
     this.generatedAngle = 0.0;
-    this.tickLast = 0; // TODO: remove when integrated with backend service
   }
 
   position() {
@@ -234,6 +234,11 @@ class Generator {
     this.lng = lng;
     this.zoom = zoom;
     return this;
+  }
+
+  setDeviceCountLimits() {
+    this.deviceCountLimitMin = 1000;
+    this.deviceCountLimitMax = max(2000, round(this.radiusKm / 4) * 1000);
   }
 
   draw() {
@@ -407,7 +412,8 @@ class Generator {
     const devices =
       this.deviceCountLimit > 0.0
         ? this.deviceCountLimit //
-        : max(generatorDevicesMin, min(generatorDevicesMax, round(map(angleDevices, angles.start, angles.stop, generatorDevicesMin, generatorDevicesMax))));
+        : max(this.deviceCountLimitMin, min(this.deviceCountLimitMax, round(map(angleDevices, angles.start, angles.stop, this.deviceCountLimitMin, this.deviceCountLimitMax))));
+    // : max(generatorDevicesMin, min(generatorDevicesMax, round(map(angleDevices, angles.start, angles.stop, generatorDevicesMin, generatorDevicesMax))));
 
     this.#drawAmountGauge({
       centerXY: centerXY,
@@ -418,8 +424,10 @@ class Generator {
       angleStop: angles.stop,
       angle: angleDevices,
       count: devices,
-      countMin: generatorDevicesMin,
-      countMax: generatorDevicesMax,
+      // countMin: generatorDevicesMin,
+      // countMax: generatorDevicesMax,
+      countMin: this.deviceCountLimitMin,
+      countMax: this.deviceCountLimitMax,
       stroke: generatorDevicesStroke,
       labelColor: labelColorGenerate,
       labelText: `Generate ${devices.toLocaleString()}`,
@@ -539,27 +547,19 @@ class Generator {
       this.radiusLat = radiusLatLng.lat;
       this.radiusLng = radiusLatLng.lng;
       this.radiusKm = haversineDistance(this.lat, this.lng, radiusLatLng.lat, radiusLatLng.lng);
+      this.setDeviceCountLimits();
       return;
     } else if (this.radiusKm > 0 && this.deviceCountLimit == 0.0) {
       const angles = this.quadrantAngles(quadrantTopLeft);
       const angleDevices = this.#mouseXtoAngle(angles.start, angles.stop);
       this.deviceCountAngle = angleDevices;
-      this.deviceCountLimit = round(map(angleDevices, angles.start, angles.stop, generatorDevicesMin, generatorDevicesMax));
+      // this.deviceCountLimit = round(map(angleDevices, angles.start, angles.stop, generatorDevicesMin, generatorDevicesMax));
+      this.deviceCountLimit = round(map(angleDevices, angles.start, angles.stop, this.deviceCountLimitMin, this.deviceCountLimitMax));
     } else if (this.deviceCountLimit > 0 && this.ratePerSecond == 0.0) {
       const angles = this.quadrantAngles(quadrantBottomLeft);
       const angleRate = this.#mouseXtoAngle(angles.start, angles.stop);
       this.rateAngle = angleRate;
       this.ratePerSecond = round(map(angleRate, angles.start, angles.stop, generatorRateMin, generatorRateMax));
-    }
-  }
-
-  tick(milliSecond) {
-    // TODO: remove when integrated with backend service
-    this.tickLast = this.tickLast == 0 ? milliSecond : this.tickLast;
-    if (milliSecond > this.tickLast) {
-      const generated = round((this.ratePerSecond / 1000) * (milliSecond - this.tickLast));
-      this.tickLast = milliSecond;
-      this.generated = min(this.generated + generated, this.deviceCountLimit);
     }
   }
 }
@@ -794,10 +794,10 @@ function drawCrossHairs() {
   line(x, y3, x, y4);
   line(x1, y, x2, y);
 
-  strokeWeight(6);
-  point(x1, y);
-  point(x, y1);
-  point(x, y4);
+  strokeWeight(5);
+  point(x1 - 15, y);
+  point(x, y1 - 15);
+  point(x, y4 + 15);
 
   stroke(mapCrossHairsDistanceStroke);
   strokeWeight(lineStrokeWeight * 2);
@@ -834,7 +834,6 @@ function drawGenerators() {
 
   currentGenerator.draw();
   generators.forEach((generator) => {
-    // generator.tick(Date.now()); // TODO remove this
     generator.draw();
   });
 }
@@ -1026,8 +1025,8 @@ function drawMouseGridLocation() {
     const border = 0.1;
     const bgColorDevices = color(255, 251, 51, 100);
     const bgColorAlarms = color(255, 51, 51, 100);
-    const keyColor = color(28, 98, 0);
-    const valueColor = color(28, 98, 0);
+    const keyColor = color(10, 20, 0);
+    const valueColor = color(10, 20, 0);
 
     if (deviceCounts.devices > 0) {
       label() //
@@ -1119,16 +1118,12 @@ function recalculateLatLngGrid() {
   }
 }
 
-function toRad(deg) {
-  return deg * (PI / 180);
-}
-
 function haversineDistance(lat1, lng1, lat2, lng2) {
   const R = 6371; // km
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const lat1Rad = toRad(lat1);
-  const lat2Rad = toRad(lat2);
+  const dLat = radians(lat2 - lat1);
+  const dLng = radians(lng2 - lng1);
+  const lat1Rad = radians(lat1);
+  const lat2Rad = radians(lat2);
 
   const a = sin(dLat / 2) * sin(dLat / 2) + sin(dLng / 2) * sin(dLng / 2) * cos(lat1Rad) * cos(lat2Rad);
   const c = 2 * atan2(sqrt(a), sqrt(1 - a));
@@ -1293,7 +1288,7 @@ function queryGenerators() {
 
   function updateGenerator(queryGenerator) {
     if (!queryGenerator.deviceCountCurrent) {
-      return; // TODO remove this when the backend is fixed
+      queryGenerator.deviceCountCurrent = 0; // TODO remove this when the missing view fields issue is fixed
     }
     const found = generators.find((g) => equal(g, queryGenerator));
     if (found) {
@@ -1302,7 +1297,7 @@ function queryGenerators() {
       const newGenerator = new Generator();
       const radiusLatLng = radiusLocation(queryGenerator.position.lat, queryGenerator.position.lng, queryGenerator.radiusKm, 0);
       const deviceAngles = newGenerator.quadrantAngles(quadrantTopLeft);
-      const deviceAngle = map(queryGenerator.deviceCountLimit, generatorDevicesMin, generatorDevicesMax, deviceAngles.start, deviceAngles.stop);
+      // const deviceAngle = map(queryGenerator.deviceCountLimit, generatorDevicesMin, generatorDevicesMax, deviceAngles.start, deviceAngles.stop);
       const rateAngles = newGenerator.quadrantAngles(quadrantBottomLeft);
       const rateAngle = map(queryGenerator.ratePerSecond, 100, 1000, rateAngles.start, rateAngles.stop);
       newGenerator.generatorId = queryGenerator.generatorId;
@@ -1312,10 +1307,12 @@ function queryGenerators() {
       newGenerator.radiusLat = radiusLatLng.lat;
       newGenerator.radiusLng = radiusLatLng.lng;
       newGenerator.radiusKm = queryGenerator.radiusKm;
+      newGenerator.setDeviceCountLimits();
       newGenerator.ratePerSecond = queryGenerator.ratePerSecond;
       newGenerator.rateAngle = rateAngle;
       newGenerator.deviceCountLimit = queryGenerator.deviceCountLimit;
       newGenerator.deviceCountCurrent = queryGenerator.deviceCountCurrent;
+      const deviceAngle = map(queryGenerator.deviceCountLimit, newGenerator.deviceCountLimitMin, newGenerator.deviceCountLimitMax, deviceAngles.start, deviceAngles.stop);
       newGenerator.deviceCountAngle = deviceAngle;
       generators.push(newGenerator);
     }
