@@ -54,7 +54,7 @@ public class DeviceEntity extends EventSourcedEntity<DeviceEntity.State> {
         .thenReply(__ -> "OK");
   }
 
-  @PutMapping("/{deviceId}/toggle-alarm") // TODO temporary for testing
+  @PutMapping("/{deviceId}/toggle-alarm")
   public Effect<String> alarm(@PathVariable String deviceId) {
     log.debug("EntityId: {}\nState: {}", entityId, currentState());
     return effects()

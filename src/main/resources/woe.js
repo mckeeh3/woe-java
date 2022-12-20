@@ -1062,6 +1062,7 @@ function drawMouseGridLocation() {
 
 function mouseClicked(event) {
   currentGenerator.click();
+  toggleClickedDevice();
   return false;
 }
 
@@ -1181,14 +1182,14 @@ function postCreateGenerator(generator) {
     ratePerSecond: generator.ratePerSecond,
   };
   httpPost(path, 'json', body, responseCreateGenerator, errorCreateGenerator);
-}
 
-function responseCreateGenerator(json) {
-  console.log('HTTP error, create generator:', json);
-}
+  function responseCreateGenerator(json) {
+    console.log('HTTP response, create generator:', json);
+  }
 
-function errorCreateGenerator(error) {
-  console.log(error);
+  function errorCreateGenerator(error) {
+    console.log('HTTP error, create generator:', error);
+  }
 }
 
 function scheduleNextDeviceQuery(lastQueryDurationMs) {
@@ -1381,5 +1382,32 @@ function getWorldWideDeviceCounts() {
     const elapsedMs = endTimeMs - startTimeMs;
     const counts = `${worldWideDeviceCounts.devices.toLocaleString()} devices, ${worldWideDeviceCounts.alarms.toLocaleString()} alarms`;
     console.log(`${new Date().toISOString()} ${elapsedMs.toFixed(0)}ms - ${counts}`);
+  }
+}
+
+function toggleClickedDevice() {
+  if (queryResponseDevices.length === 0) {
+    return;
+  }
+  const mouseLetLng = worldMap.pixelToLatLng(mouseX, mouseY);
+  const distanceFromMouse = queryResponseDevices.map((device) => {
+    const distance = haversineDistance(mouseLetLng.lat, mouseLetLng.lng, device.position.lat, device.position.lng);
+    return { distance, device };
+  });
+  const closest = distanceFromMouse.reduce((prev, curr) => (prev.distance < curr.distance ? prev : curr));
+  putToggleDeviceAlarm(closest.device);
+  console.log('closest', closest);
+}
+
+function putToggleDeviceAlarm(device) {
+  const path = urlPrefix + `/device/${device.deviceId}/toggle-alarm`;
+  httpDo(path, 'PUT', '', responseToggleDeviceAlarm, errorToggleDeviceAlarm);
+
+  function responseToggleDeviceAlarm(json) {
+    console.log('HTTP response, toggle device alarm:', json);
+  }
+
+  function errorToggleDeviceAlarm(error) {
+    console.log('HTTP error, toggle device alarm', error);
   }
 }
