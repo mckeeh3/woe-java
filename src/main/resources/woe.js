@@ -25,8 +25,6 @@ const rateGraphStroke = [0, 0, 50, 255];
 
 const generatorRateMin = 100;
 const generatorRateMax = 1_000;
-const generatorDevicesMin = 1_000;
-const generatorDevicesMax = 100_000;
 const quadrantTopRight = 1;
 const quadrantBottomRight = 2;
 const quadrantBottomLeft = 3;
@@ -39,11 +37,12 @@ let queryResponseRegions = [];
 
 const grid = {
   borderWidth: 20,
-  ticksHorizontal: 100,
+  ticksHorizontal: 0,
   ticksVertical: 0,
   tickWidth: 0,
   resize: function () {
     const gridWidth = windowWidth - 2 * this.borderWidth;
+    this.ticksHorizontal = max(100, (windowWidth / 1920) * 100);
     this.tickWidth = gridWidth / this.ticksHorizontal;
     this.ticksVertical = (windowHeight / windowWidth) * this.ticksHorizontal;
   },
@@ -413,7 +412,6 @@ class Generator {
       this.deviceCountLimit > 0.0
         ? this.deviceCountLimit //
         : max(this.deviceCountLimitMin, min(this.deviceCountLimitMax, round(map(angleDevices, angles.start, angles.stop, this.deviceCountLimitMin, this.deviceCountLimitMax))));
-    // : max(generatorDevicesMin, min(generatorDevicesMax, round(map(angleDevices, angles.start, angles.stop, generatorDevicesMin, generatorDevicesMax))));
 
     this.#drawAmountGauge({
       centerXY: centerXY,
@@ -424,8 +422,6 @@ class Generator {
       angleStop: angles.stop,
       angle: angleDevices,
       count: devices,
-      // countMin: generatorDevicesMin,
-      // countMax: generatorDevicesMax,
       countMin: this.deviceCountLimitMin,
       countMax: this.deviceCountLimitMax,
       stroke: generatorDevicesStroke,
@@ -1143,14 +1139,9 @@ function destinationPoint(lat, lng, bearing, distanceKm) {
 }
 
 function radiusLocation(lat, lng, distanceKm, bearingDeg) {
-  // const R = 6371; // km
   const bearing = bearingDeg * (Math.PI / 180);
-  // const d = distanceKm / R;
   const lat1 = lat * (Math.PI / 180);
   const lon1 = lng * (Math.PI / 180);
-
-  // const lat2 = Math.asin(Math.sin(lat1) * Math.cos(d) + Math.cos(lat1) * Math.sin(d) * Math.cos(bearing));
-  // const lon2 = lon1 + Math.atan2(Math.sin(bearing) * Math.sin(d) * Math.cos(lat1), Math.cos(d) - Math.sin(lat1) * Math.sin(lat2));
   const position = destinationPoint(lat1, lon1, bearing, distanceKm);
 
   return { lat: position.lat * (180 / Math.PI), lng: position.lng * (180 / Math.PI) };
@@ -1297,7 +1288,6 @@ function queryGenerators() {
       const newGenerator = new Generator();
       const radiusLatLng = radiusLocation(queryGenerator.position.lat, queryGenerator.position.lng, queryGenerator.radiusKm, 0);
       const deviceAngles = newGenerator.quadrantAngles(quadrantTopLeft);
-      // const deviceAngle = map(queryGenerator.deviceCountLimit, generatorDevicesMin, generatorDevicesMax, deviceAngles.start, deviceAngles.stop);
       const rateAngles = newGenerator.quadrantAngles(quadrantBottomLeft);
       const rateAngle = map(queryGenerator.ratePerSecond, 100, 1000, rateAngles.start, rateAngles.stop);
       newGenerator.generatorId = queryGenerator.generatorId;
@@ -1312,7 +1302,8 @@ function queryGenerators() {
       newGenerator.rateAngle = rateAngle;
       newGenerator.deviceCountLimit = queryGenerator.deviceCountLimit;
       newGenerator.deviceCountCurrent = queryGenerator.deviceCountCurrent;
-      const deviceAngle = map(queryGenerator.deviceCountLimit, newGenerator.deviceCountLimitMin, newGenerator.deviceCountLimitMax, deviceAngles.start, deviceAngles.stop);
+      const deviceCountLimitMax = max(queryGenerator.deviceCountLimit, newGenerator.deviceCountLimitMax);
+      const deviceAngle = map(queryGenerator.deviceCountLimit, newGenerator.deviceCountLimitMin, deviceCountLimitMax, deviceAngles.start, deviceAngles.stop);
       newGenerator.deviceCountAngle = deviceAngle;
       generators.push(newGenerator);
     }
