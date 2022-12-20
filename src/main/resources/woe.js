@@ -1062,13 +1062,14 @@ function drawMouseGridLocation() {
 
 function mouseClicked(event) {
   currentGenerator.click();
-  toggleClickedDevice();
   return false;
 }
 
 function keyTyped() {
   if (key === 'g') {
     currentGenerator = generator().position();
+  } else if (key === 't') {
+    toggleClickedDevice();
   }
 }
 
