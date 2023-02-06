@@ -15,7 +15,7 @@ public class RegionToRegionAction extends Action {
     this.kalixClient = kalixClient;
   }
 
-  public Effect<String> on(RegionEntity.RegionUpdatedEvent event) {
+  public Effect<String> on(RegionEntity.UpdatedRegionEvent event) {
     log.info("Event: {}", event);
     var region = event.region();
     var regionId = regionIdFor(region);
@@ -27,7 +27,7 @@ public class RegionToRegionAction extends Action {
     return effects().forward(deferredCall);
   }
 
-  public Effect<String> on(RegionEntity.CurrentStateReleasedEvent event) {
+  public Effect<String> on(RegionEntity.ReleasedCurrentStateEvent event) {
     log.info("Event: {}", event);
     var subRegion = event.region();
     var region = regionAbove(subRegion);

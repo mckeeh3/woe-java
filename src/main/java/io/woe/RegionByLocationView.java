@@ -43,14 +43,14 @@ public class RegionByLocationView extends View<RegionByLocationView.RegionViewRo
     return null;
   }
 
-  public UpdateEffect<RegionViewRow> on(RegionEntity.CurrentStateReleasedEvent event) {
+  public UpdateEffect<RegionViewRow> on(RegionEntity.ReleasedCurrentStateEvent event) {
     log.debug("State: {}\nEvent: {}", viewState(), event);
     return effects().updateState(RegionViewRow.on(event));
   }
 
   public record RegionViewRow(Region region, int deviceCount, int deviceAlarmCount) {
 
-    static RegionViewRow on(RegionEntity.CurrentStateReleasedEvent event) {
+    static RegionViewRow on(RegionEntity.ReleasedCurrentStateEvent event) {
       return new RegionViewRow(event.region(), event.region().deviceCount(), event.region().deviceAlarmCount());
     }
   }

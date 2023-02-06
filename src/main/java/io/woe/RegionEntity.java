@@ -64,19 +64,19 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
   }
 
   @EventHandler
-  public State on(SubRegionUpdatedEvent event) {
+  public State on(UpdatedSubRegionEvent event) {
     log.debug("State: {}\nEvent: {}", currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
-  public State on(RegionUpdatedEvent event) {
+  public State on(UpdatedRegionEvent event) {
     log.debug("State: {}\nEvent: {}", currentState(), event);
     return currentState().on(event);
   }
 
   @EventHandler
-  public State on(CurrentStateReleasedEvent event) {
+  public State on(ReleasedCurrentStateEvent event) {
     log.debug("State: {}\nEvent: {}", currentState(), event);
     return currentState().on(event);
   }
@@ -92,39 +92,41 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
     }
 
     List<?> eventsFor(UpdateSubRegionCommand command) {
-      var region = regionFor(this.region, command);
-      var events = new ArrayList<>();
-      events.add(new SubRegionUpdatedEvent(command.subRegion()));
-      if (!hasChanged) {
-        var subRegions = updateSubRegions(this.subRegions, command.subRegion());
-        events.add(new RegionUpdatedEvent(region.updateCounts(subRegions)));
+      var newRegion = regionFor(region, command);
+      var updatedSubRegionEvent = new UpdatedSubRegionEvent(command.subRegion());
+
+      if (hasChanged) {
+        return List.of(updatedSubRegionEvent);
       }
-      return events;
+      var subRegions = updateSubRegions(this.subRegions, command.subRegion());
+      var updateRegionEvent = new UpdatedRegionEvent(newRegion.updateCounts(subRegions));
+
+      return List.of(updatedSubRegionEvent, updateRegionEvent);
     }
 
-    CurrentStateReleasedEvent eventFor(ReleaseCurrentStateCommand command) {
-      var region = regionFor(this.region, command);
-      return new CurrentStateReleasedEvent(region);
+    ReleasedCurrentStateEvent eventFor(ReleaseCurrentStateCommand command) {
+      var newRegion = regionFor(region, command);
+      return new ReleasedCurrentStateEvent(newRegion);
     }
 
-    State on(SubRegionUpdatedEvent event) {
-      var region = regionFor(this.region, event);
+    State on(UpdatedSubRegionEvent event) {
+      var newRegion = regionFor(region, event);
 
-      if (this.region.isEmpty()) {
+      if (region.isEmpty()) {
         var subRegions = List.of(event.subRegion());
-        return new State(region.updateCounts(subRegions), subRegions, true);
+        return new State(newRegion.updateCounts(subRegions), subRegions, true);
       }
 
-      var subRegions = updateSubRegions(this.subRegions, event.subRegion());
-      return new State(region.updateCounts(subRegions), subRegions, true);
+      var newSubRegions = updateSubRegions(subRegions, event.subRegion());
+      return new State(newRegion.updateCounts(newSubRegions), newSubRegions, true);
     }
 
-    State on(RegionUpdatedEvent event) {
-      var region = regionFor(this.region, event);
-      return new State(region, subRegions, true);
+    State on(UpdatedRegionEvent event) {
+      var newRegion = regionFor(region, event);
+      return new State(newRegion, subRegions, true);
     }
 
-    State on(CurrentStateReleasedEvent event) {
+    State on(ReleasedCurrentStateEvent event) {
       return new State(region, subRegions, false);
     }
 
@@ -142,14 +144,14 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
       return command.region();
     }
 
-    private Region regionFor(Region region, SubRegionUpdatedEvent event) {
+    private Region regionFor(Region region, UpdatedSubRegionEvent event) {
       if (!region.isEmpty()) {
         return region;
       }
       return regionAbove(event.subRegion());
     }
 
-    private Region regionFor(Region region, RegionUpdatedEvent event) {
+    private Region regionFor(Region region, UpdatedRegionEvent event) {
       if (!region.isEmpty()) {
         return region;
       }
@@ -168,13 +170,13 @@ public class RegionEntity extends EventSourcedEntity<RegionEntity.State> {
 
   public record UpdateSubRegionCommand(Region subRegion) {}
 
+  public record UpdatedSubRegionEvent(Region subRegion) {}
+
+  public record UpdatedRegionEvent(Region region) {}
+
   public record ReleaseCurrentStateCommand(Region region) {}
 
-  public record SubRegionUpdatedEvent(Region subRegion) {}
-
-  public record RegionUpdatedEvent(Region region) {}
-
-  public record CurrentStateReleasedEvent(Region region) {}
+  public record ReleasedCurrentStateEvent(Region region) {}
 
   public record PingRequest(Region region) {}
 

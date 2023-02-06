@@ -101,7 +101,7 @@ public class RegionEntityTest {
 
       var events = result.getAllEvents();
       assertEquals(1, events.size());
-      var event = result.getNextEventOfType(RegionEntity.CurrentStateReleasedEvent.class);
+      var event = result.getNextEventOfType(RegionEntity.ReleasedCurrentStateEvent.class);
       assertEquals(2, event.region().deviceCount());
       assertEquals(0, event.region().deviceAlarmCount());
 
@@ -126,10 +126,10 @@ public class RegionEntityTest {
       var result = testKit.call(e -> e.updateSubRegion(command));
       assertFalse(result.isError());
 
-      var event1 = result.getNextEventOfType(RegionEntity.SubRegionUpdatedEvent.class);
+      var event1 = result.getNextEventOfType(RegionEntity.UpdatedSubRegionEvent.class);
       assertEquals(command.subRegion(), event1.subRegion());
 
-      var event2 = result.getNextEventOfType(RegionEntity.RegionUpdatedEvent.class);
+      var event2 = result.getNextEventOfType(RegionEntity.UpdatedRegionEvent.class);
       assertEquals(with(region, deviceCount, deviceAlarmCount), event2.region());
     }
 
